@@ -1,0 +1,3 @@
+uv pip list
+
+uv pip list | findstr lang
