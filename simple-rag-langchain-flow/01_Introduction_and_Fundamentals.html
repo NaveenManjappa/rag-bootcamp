@@ -1,0 +1,1269 @@
+<title>Notebook 01: Introduction and Fundamentals</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-main: #fafafa;
+    --bg-card: #ffffff;
+    --text-primary: #1a1a1a;
+    --text-secondary: #555555;
+    --accent: #2563eb;
+    --accent-soft: #eff6ff;
+    --code-bg: #1e1e2e;
+    --code-text: #d4d4d4;
+    --code-border: #333349;
+    --border-light: #e5e7eb;
+    --recap-bg: #fff7ed;
+    --recap-border: #fdba74;
+    --interview-bg: #f0fdf4;
+    --interview-border: #86efac;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg-main);
+    color: var(--text-primary);
+    line-height: 1.7;
+    margin: 0;
+    padding: 0;
+  }
+
+  .page-wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  /* Hero */
+  .hero {
+    padding: 2.5rem 2rem;
+    background: linear-gradient(135deg, var(--accent-soft), var(--bg-card));
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+  .hero h1 {
+    margin: 0 0 0.6rem;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .hero p.subtitle {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 1.05rem;
+  }
+
+  /* TOC */
+  .toc {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    position: sticky;
+    top: 1rem;
+    z-index: 10;
+  }
+  .toc summary {
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 1.05rem;
+    outline: none;
+  }
+  .toc ol {
+    margin: 0.9rem 0 0.2rem;
+    padding-left: 1.4rem;
+  }
+  .toc li { margin-bottom: 0.4rem; }
+  .toc a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .toc a:hover { text-decoration: underline; }
+
+  /* Content card */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    padding: 1.75rem 2rem;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+
+  h1 { font-size: 1.9rem; font-weight: 800; letter-spacing: -0.02em; }
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 0.2rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 3px solid var(--accent);
+    display: inline-block;
+  }
+  h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    border-left: 4px solid var(--accent);
+    padding-left: 0.7rem;
+  }
+  h4 {
+    font-size: 1.02rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+  hr {
+    border: none;
+    border-top: 1px solid var(--border-light);
+    margin: 1.5rem 0;
+  }
+  p { color: var(--text-primary); }
+  a { color: var(--accent); }
+  ul, ol { padding-left: 1.5rem; }
+  li { margin-bottom: 0.3rem; }
+  strong { font-weight: 700; }
+  em { font-style: italic; }
+  code:not(pre code) {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.95rem;
+    display: block;
+    overflow-x: auto;
+  }
+  th, td {
+    border: 1px solid var(--border-light);
+    padding: 0.6rem 0.9rem;
+    text-align: left;
+  }
+  th {
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  tr:nth-child(even) td { background: #fbfbfd; }
+
+  /* Code blocks */
+  .code-block {
+    position: relative;
+    background: var(--code-bg);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    margin: 1.1rem 0;
+    overflow-x: auto;
+  }
+  .code-label {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.8rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: #9aa0ac;
+    background: rgba(255,255,255,0.06);
+    padding: 0.15rem 0.55rem;
+    border-radius: 4px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .code-block pre {
+    margin: 0;
+    padding: 1.25rem 1.25rem 1rem;
+    overflow-x: auto;
+  }
+  .code-block code {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    color: var(--code-text);
+    font-size: 0.88rem;
+    line-height: 1.6;
+    white-space: pre;
+  }
+
+  /* Output blocks */
+  .output-block {
+    position: relative;
+    background: #f3f4f6;
+    border: 1px solid var(--border-light);
+    border-left: 4px solid #9ca3af;
+    border-radius: 8px;
+    margin: 0 0 1.1rem 0;
+    padding: 1rem 1.25rem 0.9rem;
+    overflow-x: auto;
+  }
+  .output-label {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: #6b7280;
+    background: #e5e7eb;
+    padding: 0.15rem 0.55rem;
+    border-radius: 4px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+  }
+  .output-block pre {
+    margin: 0;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    color: #374151;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* Recap */
+  .recap {
+    background: var(--recap-bg);
+    border: 1.5px solid var(--recap-border);
+    border-radius: 10px;
+    padding: 1.75rem 2rem;
+    margin: 2.5rem 0 1.5rem;
+  }
+  .recap h2 { border-bottom-color: var(--recap-border); }
+  .recap ul { padding-left: 1.4rem; }
+  .recap li { margin-bottom: 0.55rem; }
+
+  /* Interview prep */
+  .interview {
+    background: var(--interview-bg);
+    border: 1.5px solid var(--interview-border);
+    border-radius: 10px;
+    padding: 1.75rem 2rem;
+    margin: 1.5rem 0;
+  }
+  .interview h2 { border-bottom-color: var(--interview-border); }
+  .qa {
+    background: rgba(255,255,255,0.6);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin: 1rem 0;
+  }
+  .qa .q {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  .qa .a {
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+  }
+  .qa .gotcha {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    border-top: 1px dashed var(--interview-border);
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+  }
+  .qa .gotcha strong { color: #15803d; }
+
+  @media (max-width: 640px) {
+    .page-wrap { padding: 1.25rem 1rem 3rem; }
+    .card, .recap, .interview { padding: 1.25rem 1.25rem; }
+    .hero { padding: 1.75rem 1.25rem; }
+    .hero h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.25rem; }
+  }
+</style>
+
+<div class="page-wrap">
+
+  <div class="hero">
+    <h1>📚 Notebook 01: Introduction and Fundamentals</h1>
+    <p class="subtitle">An introductory walkthrough of LangChain's architecture, core concepts, environment setup, and first LCEL chains for building LLM-powered applications.</p>
+  </div>
+
+  <details class="toc" open>
+    <summary>📖 Table of Contents</summary>
+    <ol>
+      <li><a href="#what-is-langchain">What is LangChain?</a></li>
+      <li><a href="#architecture">LangChain Architecture</a></li>
+      <li><a href="#setup">Environment Setup</a></li>
+      <li><a href="#core-concepts">Core Concepts</a></li>
+      <li><a href="#quick-start">Quick Start Example</a></li>
+      <li><a href="#comparison">LangChain vs Traditional Pipelines</a></li>
+      <li><a href="#summary">Summary & Next Steps</a></li>
+      <li><a href="#quick-recap">Quick Recap</a></li>
+      <li><a href="#interview-prep">Interview Prep</a></li>
+    </ol>
+  </details>
+
+  <!-- ===================== CELL 0 ===================== -->
+  <div class="card">
+    <h1>📚 Notebook 01: Introduction and Fundamentals</h1>
+    <p><strong>LangChain 1.0.5+ | Mixed Level Class</strong></p>
+    <hr>
+    <h2>🎯 Learning Objectives</h2>
+    <p>By the end of this notebook, you will understand:</p>
+    <ol>
+      <li>What LangChain is and why it's useful</li>
+      <li>LangChain's modular architecture</li>
+      <li>Core concepts: Documents, Chains, and LCEL</li>
+      <li>How to set up your development environment</li>
+      <li>The difference between LangChain and traditional ML pipelines</li>
+    </ol>
+    <hr>
+    <h2>📖 Table of Contents</h2>
+    <ol>
+      <li><a href="#what-is-langchain">What is LangChain?</a></li>
+      <li><a href="#architecture">LangChain Architecture</a></li>
+      <li><a href="#setup">Environment Setup</a></li>
+      <li><a href="#core-concepts">Core Concepts</a></li>
+      <li><a href="#quick-start">Quick Start Example</a></li>
+      <li><a href="#comparison">LangChain vs Traditional Pipelines</a></li>
+      <li><a href="#summary">Summary & Next Steps</a></li>
+    </ol>
+    <hr>
+  </div>
+
+  <!-- ===================== CELL 1 ===================== -->
+  <div class="card" id="what-is-langchain">
+    <h2>1. What is LangChain? 🤔</h2>
+    <h3>🔰 BEGINNER SECTION</h3>
+    <p><strong>LangChain</strong> is an open-source framework that makes it easy to build applications powered by Large Language Models (LLMs) like GPT-4, Claude, or Llama.</p>
+    <h3>Why LangChain?</h3>
+    <p>Imagine you want to build a chatbot that can:</p>
+    <ul>
+      <li>Answer questions about your company's PDF documents</li>
+      <li>Search through your database</li>
+      <li>Remember previous conversations</li>
+      <li>Call external APIs</li>
+    </ul>
+    <p>Without LangChain, you'd need to:</p>
+    <ol>
+      <li>✍️ Write code to load and parse PDFs</li>
+      <li>✍️ Convert text to embeddings</li>
+      <li>✍️ Store embeddings in a vector database</li>
+      <li>✍️ Implement semantic search</li>
+      <li>✍️ Format prompts for the LLM</li>
+      <li>✍️ Handle LLM API calls</li>
+      <li>✍️ Manage conversation memory</li>
+    </ol>
+    <p><strong>With LangChain:</strong></p>
+    <ul>
+      <li>✅ All these components are pre-built and ready to use</li>
+      <li>✅ You just connect them like LEGO blocks</li>
+      <li>✅ Focus on your application logic, not infrastructure</li>
+    </ul>
+    <h3>🎓 INTERMEDIATE NOTE</h3>
+    <p>LangChain provides:</p>
+    <ul>
+      <li><strong>Abstractions</strong>: Unified interfaces for different LLMs, vector stores, and tools</li>
+      <li><strong>Chains</strong>: Composable workflows using LCEL (LangChain Expression Language)</li>
+      <li><strong>Agents</strong>: Autonomous systems that can use tools and make decisions</li>
+      <li><strong>Memory</strong>: Conversation history and context management</li>
+      <li><strong>Callbacks</strong>: Monitoring, logging, and debugging hooks</li>
+    </ul>
+  </div>
+
+  <!-- ===================== CELL 2 ===================== -->
+  <div class="card" id="architecture">
+    <h2>2. LangChain Architecture 🏗️</h2>
+    <h3>🔰 BEGINNER: Visual Architecture</h3>
+    <div class="code-block"><span class="code-label">Text</span><pre><code>┌─────────────────────────────────────────────────────────┐
+│                    YOUR APPLICATION                     │
+└─────────────────────────────────────────────────────────┘
+                           ↓
+┌─────────────────────────────────────────────────────────┐
+│                  LANGCHAIN FRAMEWORK                    │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────────┐  │
+│  │ Document │  │   Text   │  │ Embeddings│  │ Vector  │ │
+│  │ Loaders  │→ │ Splitters│→ │  Models   │→ │ Stores  │ │
+│  └──────────┘  └──────────┘  └──────────┘  └─────────┘│
+│                                                         │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐               │
+│  │Retrievers│  │ Prompts  │  │   LLMs   │               │
+│  └──────────┘  └──────────┘  └──────────┘               │
+│                                                         │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │         LCEL (LangChain Expression Language)     │   │
+│  │         Connects everything with | operator      │   │
+│  └──────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+                           ↓
+┌─────────────────────────────────────────────────────────┐
+│             EXTERNAL SERVICES & DATA                    │
+│  • OpenAI/Anthropic APIs  • Vector Databases            │
+│  • PDF Files              • Websites                    │
+│  • Databases              • APIs                        │
+└─────────────────────────────────────────────────────────┘
+</code></pre></div>
+    <h3>🎓 INTERMEDIATE: Package Structure (LangChain 1.0+)</h3>
+    <p>LangChain is organized into several packages:</p>
+    <table>
+      <thead><tr><th>Package</th><th>Purpose</th><th>Example Imports</th></tr></thead>
+      <tbody>
+        <tr><td><strong>langchain-core</strong></td><td>Core abstractions, base classes</td><td><code>from langchain_core.documents import Document</code></td></tr>
+        <tr><td><strong>langchain-community</strong></td><td>Community integrations (loaders, vector stores)</td><td><code>from langchain_community.document_loaders import PyPDFLoader</code></td></tr>
+        <tr><td><strong>langchain-openai</strong></td><td>OpenAI-specific integrations</td><td><code>from langchain_openai import ChatOpenAI, OpenAIEmbeddings</code></td></tr>
+        <tr><td><strong>langchain-text-splitters</strong></td><td>Text splitting utilities</td><td><code>from langchain_text_splitters import RecursiveCharacterTextSplitter</code></td></tr>
+      </tbody>
+    </table>
+    <p><strong>Why this matters:</strong> In LangChain 1.0+, you import from specific packages instead of <code>langchain</code> directly. This reduces dependencies and improves modularity.</p>
+  </div>
+
+  <!-- ===================== CELL 3 ===================== -->
+  <div class="card" id="setup">
+    <h2>3. Environment Setup 🛠️</h2>
+    <h3>🔰 BEGINNER: Step-by-Step Setup</h3>
+    <p>Let's verify your environment is ready!</p>
+  </div>
+
+  <!-- ===================== CELL 4 (code) ===================== -->
+  <div class="card">
+    <div class="code-block"><span class="code-label">Python</span><pre><code># Step 1: Check Python version (should be 3.9+)
+import sys
+print(f"Python version: {sys.version}")
+
+# Check if Python is 3.9 or higher
+if sys.version_info >= (3, 9):
+    print("✅ Python version is compatible")
+else:
+    print("❌ Please upgrade to Python 3.9 or higher")</code></pre></div>
+    <div class="output-block"><span class="output-label">Output</span><pre>Python version: 3.13.2 (main, Mar 17 2025, 21:26:38) [Clang 20.1.0 ]
+✅ Python version is compatible</pre></div>
+  </div>
+
+  <!-- ===================== CELL 5 (code) ===================== -->
+  <div class="card">
+    <div class="code-block"><span class="code-label">Python</span><pre><code># Step 2: Import LangChain and check version
+import langchain
+from langchain_core import __version__ as core_version
+
+print(f"LangChain version: {langchain.__version__}")
+print(f"LangChain Core version: {core_version}")
+
+# We're using LangChain 1.0.5+ for this course
+if langchain.__version__ >= "1.0":
+    print("✅ LangChain 1.0+ detected")
+else:
+    print("❌ Please upgrade: pip install --upgrade langchain")</code></pre></div>
+    <div class="output-block"><span class="output-label">Output</span><pre>LangChain version: 1.0.5
+LangChain Core version: 1.0.5
+✅ LangChain 1.0+ detected</pre></div>
+  </div>
+
+  <!-- ===================== CELL 6 (code) ===================== -->
+  <div class="card">
+    <div class="code-block"><span class="code-label">Python</span><pre><code># Step 3: Load environment variables (API keys)
+from dotenv import load_dotenv
+import os
+
+# Load .env file
+load_dotenv()
+
+# Check if OpenAI API key is set
+# NOTE: We don't print the actual key for security!
+if os.getenv("OPENAI_API_KEY"):
+    print("✅ OPENAI_API_KEY found")
+else:
+    print("❌ OPENAI_API_KEY not found")
+    print("   Create a .env file with: OPENAI_API_KEY=your-key-here")
+
+# Check for Google API key (optional, for Google Gemini)
+if os.getenv("GOOGLE_API_KEY"):
+    print("✅ GOOGLE_API_KEY found")
+else:
+    print("⚠️  GOOGLE_API_KEY not found (optional for this notebook)")</code></pre></div>
+    <div class="output-block"><span class="output-label">Output</span><pre>✅ OPENAI_API_KEY found
+⚠️  GOOGLE_API_KEY not found (optional for this notebook)</pre></div>
+  </div>
+
+  <!-- ===================== CELL 7 ===================== -->
+  <div class="card">
+    <h3>📝 Setting Up Your .env File</h3>
+    <p>If you don't have a <code>.env</code> file, create one in the project root:</p>
+    <div class="code-block"><span class="code-label">Bash</span><pre><code># .env file
+OPENAI_API_KEY=sk-proj-your-key-here
+GOOGLE_API_KEY=your-google-key-here</code></pre></div>
+    <p><strong>⚠️ SECURITY WARNING:</strong></p>
+    <ul>
+      <li>Never commit <code>.env</code> files to Git</li>
+      <li>Add <code>.env</code> to your <code>.gitignore</code> file</li>
+      <li>Never hardcode API keys in your code</li>
+    </ul>
+  </div>
+
+  <!-- ===================== CELL 8 ===================== -->
+  <div class="card" id="core-concepts">
+    <h2>4. Core Concepts 📚</h2>
+    <h3>4.1 Documents 📄</h3>
+    <h3>🔰 BEGINNER</h3>
+    <p>A <strong>Document</strong> is LangChain's way of representing a piece of text with metadata.</p>
+    <p>Think of it like a note card:</p>
+    <ul>
+      <li><strong>Front (page_content):</strong> The actual text</li>
+      <li><strong>Back (metadata):</strong> Information about the text (source, page number, date, etc.)</li>
+    </ul>
+  </div>
+
+  <!-- ===================== CELL 9 (code) ===================== -->
+  <div class="card">
+    <div class="code-block"><span class="code-label">Python</span><pre><code># Creating a Document manually
+from langchain_core.documents import Document
+
+# Create a simple document
+doc = Document(
+    page_content="LangChain makes building LLM applications easy!",
+    metadata={
+        "source": "introduction.txt",
+        "author": "LangChain Team",
+        "date": "2025-01-15"
+    }
+)
+
+# Access the content
+print("Content:")
+print(doc.page_content)
+print("\nMetadata:")
+print(doc.metadata)
+print(f"\nSource: {doc.metadata['source']}")</code></pre></div>
+    <div class="output-block"><span class="output-label">Output</span><pre>Content:
+LangChain makes building LLM applications easy!
+
+Metadata:
+{'source': 'introduction.txt', 'author': 'LangChain Team', 'date': '2025-01-15'}
+
+Source: introduction.txt</pre></div>
+  </div>
+
+  <!-- ===================== CELL 10 ===================== -->
+  <div class="card">
+    <h3>🎓 INTERMEDIATE: Why Metadata Matters</h3>
+    <p>Metadata is crucial for:</p>
+    <ol>
+      <li><strong>Citation</strong>: Showing users where information came from</li>
+      <li><strong>Filtering</strong>: Only search documents from specific sources</li>
+      <li><strong>Debugging</strong>: Tracking which documents are being retrieved</li>
+      <li><strong>Analytics</strong>: Understanding which sources are most useful</li>
+    </ol>
+  </div>
+
+  <!-- ===================== CELL 11 (code) ===================== -->
+  <div class="card">
+    <div class="code-block"><span class="code-label">Python</span><pre><code># Creating multiple documents (like a mini knowledge base)
+documents = [
+    Document(
+        page_content="Python is a high-level programming language.",
+        metadata={"category": "programming", "difficulty": "beginner"}
+    ),
+    Document(
+        page_content="Machine learning is a subset of artificial intelligence.",
+        metadata={"category": "AI", "difficulty": "intermediate"}
+    ),
+    Document(
+        page_content="RAG combines retrieval and generation for better LLM outputs.",
+        metadata={"category": "AI", "difficulty": "advanced"}
+    )
+]
+
+# Print all documents
+for i, doc in enumerate(documents, 1):
+    print(f"\n📄 Document {i}:")
+    print(f"   Content: {doc.page_content}")
+    print(f"   Category: {doc.metadata['category']}")
+    print(f"   Difficulty: {doc.metadata['difficulty']}")</code></pre></div>
+    <div class="output-block"><span class="output-label">Output</span><pre>
+📄 Document 1:
+   Content: Python is a high-level programming language.
+   Category: programming
+   Difficulty: beginner
+
+📄 Document 2:
+   Content: Machine learning is a subset of artificial intelligence.
+   Category: AI
+   Difficulty: intermediate
+
+📄 Document 3:
+   Content: RAG combines retrieval and generation for better LLM outputs.
+   Category: AI
+   Difficulty: advanced</pre></div>
+  </div>
+
+  <!-- ===================== CELL 12 ===================== -->
+  <div class="card">
+    <h3>4.2 LCEL (LangChain Expression Language) 🔗</h3>
+    <h3>🔰 BEGINNER</h3>
+    <p><strong>LCEL</strong> is a way to connect different components using the pipe operator <code>|</code>.</p>
+    <p>Think of it like a factory assembly line:</p>
+    <div class="code-block"><span class="code-label">Text</span><pre><code>Input → Component 1 → Component 2 → Component 3 → Output</code></pre></div>
+    <h3>Before LCEL (Old Way - Messy!):</h3>
+    <div class="code-block"><span class="code-label">Python</span><pre><code>output = component3(component2(component1(input)))</code></pre></div>
+    <h3>With LCEL (New Way - Clean!):</h3>
+    <div class="code-block"><span class="code-label">Python</span><pre><code>chain = component1 | component2 | component3
+output = chain.invoke(input)</code></pre></div>
+  </div>
+
+  <!-- ===================== CELL 13 ===================== -->
+  <div class="card">
+    <h3>🎓 INTERMEDIATE: LCEL Deep Dive</h3>
+    <p>LCEL provides:</p>
+    <ul>
+      <li><strong>Streaming</strong>: Stream outputs as they're generated</li>
+      <li><strong>Batch Processing</strong>: Process multiple inputs efficiently</li>
+      <li><strong>Async Support</strong>: Non-blocking operations</li>
+      <li><strong>Debugging</strong>: Better error messages and logging</li>
+      <li><strong>Type Safety</strong>: Better IDE autocomplete</li>
+    </ul>
+    <p><strong>Key Methods:</strong></p>
+    <ul>
+      <li><code>.invoke(input)</code>: Process single input</li>
+      <li><code>.batch([input1, input2])</code>: Process multiple inputs</li>
+      <li><code>.stream(input)</code>: Stream output tokens</li>
+      <li><code>.ainvoke(input)</code>: Async version of invoke</li>
+    </ul>
+  </div>
+
+  <!-- ===================== CELL 14 (code) ===================== -->
+  <div class="card">
+    <div class="code-block"><span class="code-label">Python</span><pre><code># Simple LCEL Example: String Transformation Chain
+from langchain_core.runnables import RunnableLambda
+
+# Create simple transformation functions
+def uppercase(text: str) -> str:
+    """Convert text to uppercase"""
+    print(f"  Step 1: uppercase → {text.upper()}")
+    return text.upper()
+
+def add_prefix(text: str) -> str:
+    """Add a prefix to text"""
+    result = f"RESULT: {text}"
+    print(f"  Step 2: add_prefix → {result}")
+    return result
+
+def add_emoji(text: str) -> str:
+    """Add emoji to text"""
+    result = f"✅ {text}"
+    print(f"  Step 3: add_emoji → {result}")
+    return result
+
+# Create runnables (components that can be chained)
+uppercase_runnable = RunnableLambda(uppercase)
+prefix_runnable = RunnableLambda(add_prefix)
+emoji_runnable = RunnableLambda(add_emoji)
+
+# Build the chain using LCEL
+chain = uppercase_runnable | prefix_runnable | emoji_runnable
+
+# Execute the chain
+print("Input: 'hello langchain'")
+print("\nProcessing:")
+result = chain.invoke("hello langchain")
+print(f"\nFinal Output: {result}")</code></pre></div>
+    <div class="output-block"><span class="output-label">Output</span><pre>Input: 'hello langchain'
+
+Processing:
+  Step 1: uppercase → HELLO LANGCHAIN
+  Step 2: add_prefix → RESULT: HELLO LANGCHAIN
+  Step 3: add_emoji → ✅ RESULT: HELLO LANGCHAIN
+
+Final Output: ✅ RESULT: HELLO LANGCHAIN</pre></div>
+  </div>
+
+  <!-- ===================== CELL 15 ===================== -->
+  <div class="card">
+    <h3>4.3 Chains 🔗</h3>
+    <h3>🔰 BEGINNER</h3>
+    <p>A <strong>Chain</strong> is a sequence of operations. Common chain types:</p>
+    <ol>
+      <li><strong>Simple Chain</strong>: Input → Process → Output</li>
+      <li><strong>RAG Chain</strong>: Query → Retrieve → Generate → Answer</li>
+      <li><strong>Multi-step Chain</strong>: Input → Step 1 → Step 2 → Step 3 → Output</li>
+    </ol>
+    <p>We'll build complex chains in later notebooks!</p>
+  </div>
+
+  <!-- ===================== CELL 16 ===================== -->
+  <div class="card" id="quick-start">
+    <h2>5. Quick Start Example 🚀</h2>
+    <h3>🔰 BEGINNER: Your First LLM Call</h3>
+    <p>Let's make our first call to an LLM using LangChain!</p>
+  </div>
+
+  <!-- ===================== CELL 17 (code) ===================== -->
+  <div class="card">
+    <div class="code-block"><span class="code-label">Python</span><pre><code># Import ChatOpenAI (the LLM interface)
+from langchain_openai import ChatOpenAI
+
+# Initialize the LLM
+# model: Which GPT model to use
+# temperature: 0 = deterministic, 1 = creative
+llm = ChatOpenAI(
+    model="gpt-5-nano",  # Cheaper, faster model for learning
+    temperature=0  # Deterministic outputs for learning
+)
+
+# Make a simple call
+response = llm.invoke("What is LangChain in two sentences?")
+
+# Print the response
+print("Question: What is LangChain in one sentence?")
+print(f"\nAnswer: {response.content}")</code></pre></div>
+    <div class="output-block"><span class="output-label">Output</span><pre>Question: What is LangChain in one sentence?
+
+Answer: LangChain is an open-source framework for building applications powered by language models. It offers modular components like prompts, chains, memory, agents, and tool integrations to orchestrate LLM reasoning, state management, and tool usage.</pre></div>
+  </div>
+
+  <!-- ===================== CELL 18 ===================== -->
+  <div class="card">
+    <h3>FOR GEMINI</h3>
+  </div>
+
+  <!-- ===================== CELL 19 (code) ===================== -->
+  <div class="card">
+    <div class="code-block"><span class="code-label">Shell</span><pre><code>!uv pip install -U langchain-google-genai</code></pre></div>
+    <div class="output-block"><span class="output-label">Output</span><pre>Resolved 39 packages in 185ms
+Audited 39 packages in 0.39ms</pre></div>
+  </div>
+
+  <!-- ===================== CELL 20 (code) ===================== -->
+  <div class="card">
+    <div class="code-block"><span class="code-label">Python</span><pre><code>from langchain_google_genai import ChatGoogleGenerativeAI</code></pre></div>
+  </div>
+
+  <!-- ===================== CELL 21 (code) ===================== -->
+  <div class="card">
+    <div class="code-block"><span class="code-label">Python</span><pre><code>llm = ChatGoogleGenerativeAI(
+model="gemini-2.5-flash",  # Example Gemini model
+temperature=0  # Deterministic outputs for learning
+)
+
+# Make a simple call
+response = llm.invoke("What is LangChain in one sentence?")
+
+# Print the response
+print("Question: What is LangChain in one sentence?")
+print(f"\nAnswer: {response.content}")</code></pre></div>
+    <div class="output-block"><span class="output-label">Output</span><pre>Question: What is LangChain in one sentence?
+
+Answer: LangChain is a development framework that helps build applications powered by large language models (LLMs) by enabling them to connect with external data sources and tools, and chain together complex operations.</pre></div>
+  </div>
+
+  <!-- ===================== CELL 22 ===================== -->
+  <div class="card">
+    <h3>🎓 INTERMEDIATE: Understanding the Response Object</h3>
+  </div>
+
+  <!-- ===================== CELL 23 (code) ===================== -->
+  <div class="card">
+    <div class="code-block"><span class="code-label">Python</span><pre><code># The response is an AIMessage object with metadata
+print("Response Type:", type(response))
+print("\nContent:", response.content)
+print("\nResponse Metadata:")
+print(response.response_metadata)
+
+# Access specific metadata
+if 'token_usage' in response.response_metadata:
+    usage = response.response_metadata['token_usage']
+    print(f"\nTokens Used:")
+    print(f"  Prompt: {usage.get('prompt_tokens', 'N/A')}")
+    print(f"  Completion: {usage.get('completion_tokens', 'N/A')}")
+    print(f"  Total: {usage.get('total_tokens', 'N/A')}")</code></pre></div>
+    <div class="output-block"><span class="output-label">Output</span><pre>Response Type: &lt;class 'langchain_core.messages.ai.AIMessage'&gt;
+
+Content: LangChain is an open-source framework for building applications powered by language models. It offers modular components like prompts, chains, memory, agents, and tool integrations to orchestrate LLM reasoning, state management, and tool usage.
+
+Response Metadata:
+{'token_usage': {'completion_tokens': 502, 'prompt_tokens': 14, 'total_tokens': 516, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 448, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}, 'model_name': 'gpt-5-nano-2025-08-07', 'system_fingerprint': None, 'id': 'chatcmpl-CcPqHkavNdcO0KvUOFlmguKnTy7Hs', 'service_tier': 'default', 'finish_reason': 'stop', 'logprobs': None}
+
+Tokens Used:
+  Prompt: 14
+  Completion: 502
+  Total: 516</pre></div>
+  </div>
+
+  <!-- ===================== CELL 24 ===================== -->
+  <div class="card">
+    <h3>🔰 BEGINNER: Using Prompts</h3>
+    <p>Instead of plain strings, use <strong>prompt templates</strong> for better control:</p>
+  </div>
+
+  <!-- ===================== CELL 25 (code) ===================== -->
+  <div class="card">
+    <div class="code-block"><span class="code-label">Python</span><pre><code>from langchain_core.prompts import ChatPromptTemplate
+
+
+# Create a prompt template
+# {topic} is a variable we'll fill in later
+prompt = ChatPromptTemplate.from_template(
+    "Explain {topic} in simple terms suitable for beginners."
+)
+
+# View the prompt structure
+print("Prompt Template:")
+print(prompt.messages[0].prompt.template)</code></pre></div>
+    <div class="output-block"><span class="output-label">Output</span><pre>Prompt Template:
+Explain {topic} in simple terms suitable for beginners.</pre></div>
+  </div>
+
+  <!-- ===================== CELL 26 (code) ===================== -->
+  <div class="card">
+    <div class="code-block"><span class="code-label">Python</span><pre><code># Build a chain: Prompt → LLM
+from langchain_core.output_parsers import StrOutputParser
+
+# Components:
+# 1. prompt: Formats the input
+# 2. llm: Generates the response
+# 3. StrOutputParser: Extracts just the text from the response
+
+chain = prompt | llm | StrOutputParser()
+
+# Use the chain with different topics
+topics = ["machine learning", "embeddings", "vector databases"]
+
+for topic in topics:
+    print(f"\n{'='*60}")
+    print(f"Topic: {topic.upper()}")
+    print('='*60)
+
+    # Invoke the chain
+    explanation = chain.invoke({"topic": topic})
+    print(explanation)</code></pre></div>
+    <div class="output-block"><span class="output-label">Output</span><pre>
+============================================================
+Topic: MACHINE LEARNING
+============================================================
+Machine learning is a way for computers to learn from data how to do tasks, instead of being told exactly how to do them step by step.
+
+Key ideas in plain terms:
+- You give the computer examples (data). Some examples have the right answers (labels), some don't.
+- The computer finds patterns in those examples and learns a rule or model that can make predictions on new data.
+- After learning, you test it on new data to see if it can generalize (work well on data it hasn't seen).
+
+Main types, with simple examples:
+- Supervised learning (learning from labeled data)
+  - Regression: predicting a number. Example: estimate house prices from features like size, location, and age.
+  - Classification: predicting a category. Example: tell emails apart as "spam" or "not spam."
+- Unsupervised learning (learning from unlabeled data)
+  - Clustering: group similar items together. Example: group customers by buying habits.
+  - Dimensionality reduction: reduce many features into a simpler set while keeping the important information. Example: simplifying the data to visualize it.
+- Reinforcement learning (learning by trial and error)
+  - An agent interacts with an environment, tries actions, and gets rewards or punishments. Example: a computer learning to play a game by practicing.
+
+How a typical machine learning project works (very simple steps):
+1. Define the problem you want to solve.
+2. Collect data related to the problem.
+3. Clean and prepare the data (handle missing values, remove mistakes).
+4. Split the data into a training set (to learn) and a test set (to check how it does on new data).
+5. Choose a model (a simple one to start is good).
+6. Train the model on the training data (the computer learns from the examples).
+7. Evaluate the model on the test data (see how well it predicts or classifies).
+8. Improve: adjust features, try another model, get more data, or fix problems (like bias or noise).
+9. Deploy and monitor (use it in the real world and keep an eye on performance).
+
+A very simple example: predicting house prices (supervised learning)
+- Data: past houses with features like size, number of bedrooms, age, and the price they sold for.
+- Train a model to map those features to a price.
+- Test the model on different houses to see how close its price predictions are.
+- If it predicts well, you can use it to estimate prices for new houses.
+
+Important ideas to keep in mind
+- Features are the inputs you feed the model (numbers, categories turned into numbers, etc.). Good features help the model learn.
+- The goal is generalization: perform well on data the model hasn't seen before, not just on the data it was trained on.
+- Overfitting: when the model learns the training data too well (including its noise) and fails on new data.
+- Underfitting: when the model is too simple to capture the real patterns.
+- Data matters: biased or unrepresentative data leads to biased or poor models.
+- Many problems are solved with simple models first (like linear regression or decision trees) before trying more complex ones.
+
+If you want, I can give you a tiny, beginner-friendly example with plain language steps or a short Python snippet using a beginner-friendly library (like scikit-learn). Tell me what problem you're curious about (e.g., sorting emails, recommending movies, predicting something), and I'll tailor a simple walkthrough.
+
+============================================================
+Topic: EMBEDDINGS
+============================================================
+Embeddings are a way to turn things like words or items into numbers so a computer can understand them.
+
+- Big idea: Words (or items) are discrete and hard for computers to compare directly. Embeddings turn each word into a real-valued vector (a list of numbers). The vectors live in a space where "similar" words have similar vectors.
+
+- Why this helps: If two words often show up in similar places or have similar meanings, their vectors end up close together. This lets the computer capture semantics (meaning) and relationships, not just exact matches.
+
+A simple analogy
+- Imagine placing words on a map. Words with related meanings cluster near each other. For example, cat and dog would be nearby; car would be somewhere else. Distance or direction on the map tells you something about how words relate.
+
+How embeddings are learned (high level)
+- Start with a lot of text (or data about items).
+- The model tries to predict which words tend to appear near each other (context).
+- While learning to predict, it assigns each word a vector (an embedding) that makes good predictions. Over time, similar words get similar vectors.
+
+A famous idea you may hear
+- In a vector space, some relationships look linear. For example, the famous word trick: "king" minus "man" plus "woman" is close to "queen" in the embedding space. This shows the space has meaningful structure.
+
+A tiny toy example (intuitive)
+- Suppose we only look at four words: cat, dog, fish, car.
+- In 2D embedding space, cat and dog might be near each other (both animals that meow/bark), while car sits far away (an object). Fish sits somewhere else. This is just to illustrate that proximity reflects similarity.
+
+Measuring similarity
+- You compare vectors with:
+  - Cosine similarity: how aligned two vectors are (close to 1 means very similar).
+  - Euclidean distance: how far apart they are (smaller distance means more similar).
+
+Common places embeddings are used
+- Word meanings in language (Word2Vec, GloVe, FastText).
+- Documents or sentences (document embeddings).
+- Recommender systems (embedding users and items into the same space).
+- Images or multimodal data where text and images are mapped to a shared space.
+
+Getting started (practical, beginner-friendly)
+- Use pre-trained embeddings (e.g., GloVe, Word2Vec) rather than training from scratch.
+- Load embeddings with a library (gensim, spaCy) and look up words to get their vectors.
+- Visualize with a simple tool (PCA or t-SNE) to see which words cluster together.
+- Try simple experiments: which words are most similar to "king"? What about "apple" vs "fruit"?
+
+Quick recap
+- Embeddings convert discrete items into numbers in a way that reflects meaning and similarity.
+- They're learned from data, so the spacing in the vector space encodes relationships between items.
+- They enable computers to do smarter comparisons, reasoning, and predictions across language, recommendations, and more.
+
+If you'd like, tell me what area you're interested in (words, products, or images), and I can give a concrete, beginner-friendly walkthrough or a tiny code example.
+
+============================================================
+Topic: VECTOR DATABASES
+============================================================
+Here's a simple way to understand vector databases.
+
+- What is a vector?
+  - A vector is a list of numbers that represents something, like the meaning of a sentence or an image. It's not the raw text or pixels, but a numeric fingerprint of "what it's about."
+
+- What is a vector database?
+  - A vector database stores lots of these fingerprints (vectors) and helps you quickly find which ones are most similar to a given vector. It's optimized for searching by meaning, not just exact text.
+
+- How is it different from a regular database?
+  - Regular databases are great at exact matches (does this record have this exact value?). Vector databases are great at similarity: "which items are semantically close to this query?" So you can answer questions like "articles like this one" or "products that feel similar in style."
+
+- Key ideas and terms
+  - Embeddings: the process of turning a thing (text, image, etc.) into a vector.
+  - Vectors: the high-dimensional numeric fingerprints.
+  - Similarity/search: finding the closest vectors to a query vector.
+  - Distance metrics: ways to measure closeness. Common ones are cosine similarity (how aligned the directions are), Euclidean distance (straight-line distance), and dot product.
+  - ANN (Approximate Nearest Neighbors): fast methods to find near-by vectors even in huge datasets.
+  - Index: a data structure that makes searching fast (think of it as a smart table of contents for vectors).
+
+- How it works, end-to-end
+  1) Ingest data: gather items you want to search (articles, products, images).
+  2) Create embeddings: run each item through a model to get its vector.
+  3) Store vectors: save those vectors (plus any metadata like IDs or tags) in the vector database.
+  4) Query: convert your search term or example into a vector (via the same embedding model).
+  5) Search and rank: the database finds the closest stored vectors to your query vector and returns the best matches, often with extra filtering (like only in stock or from a certain category).
+  6) Use results: present the top matches to the user or use them to power recommendations.
+
+- When to use a vector database
+  - Semantic search: find documents or products by meaning, not exact keywords.
+  - Image or audio similarity: find items that look or sound alike.
+  - Recommendations: suggest items that are semantically close to what a user likes.
+  - Duplicate detection: identify items that are essentially the same, even if text is different.
+  - Any scenario where the "best match" is about meaning, not exact text.
+
+- A simple example
+  - You have a library of product descriptions.
+  - You turn each description into an embedding (a vector).
+  - A user types "red running shoes."
+  - The system turns that query into a vector and finds the top 5 product descriptions whose vectors are most similar.
+  - You show those products to the user.
+
+- Pros and cons
+  - Pros:
+    - Fast, scalable semantic search and recommendations.
+    - Works across text, images, audio, and more when you have good embeddings.
+  - Cons:
+    - You depend on embedding quality. bad embeddings = bad results.
+    - Requires some extra engineering (embedding model, keeping vectors in sync with data).
+    - Can be resource-intensive for very large datasets; you may pay for hosted services or need careful cost planning.
+
+- Quick getting-started steps
+  - Pick a use case (e.g., semantic product search).
+  - Choose an embedding model appropriate for your data (text models for descriptions, image models for pictures, etc.).
+  - Select a vector database or service (there are several options; some are hosted and easy to start with).
+  - Ingest your data and compute embeddings.
+  - Build a simple query flow: embed the query, search the vector index, return top results.
+  - Iterate: test with real queries, adjust filtering, and improve embeddings.
+
+- Quick tips
+  - Start with good, diverse data for embeddings.
+  - Include metadata with each vector (item ID, category, price, etc.) so you can filter after the similarity search.
+  - Measure quality with real-world queries and adjust as needed.
+  - Consider latency vs. accuracy trade-offs; some ANN methods are faster but slightly less exact.
+
+If you share your goal (for example, "build a search feature for product descriptions" or "find similar images"), I can tailor a simple plan and suggest a couple of beginner-friendly tools.</pre></div>
+  </div>
+
+  <!-- ===================== CELL 27 ===================== -->
+  <div class="card">
+    <h3>🎓 INTERMEDIATE: Batch Processing</h3>
+    <p>Process multiple inputs efficiently using <code>.batch()</code>:</p>
+  </div>
+
+  <!-- ===================== CELL 28 (code) ===================== -->
+  <div class="card">
+    <div class="code-block"><span class="code-label">Python</span><pre><code># Batch process multiple topics at once
+topics_batch = [
+    {"topic": "RAG"},
+    {"topic": "LCEL"},
+    {"topic": "LangChain agents"}
+]
+
+# Batch processing is more efficient than calling invoke() multiple times
+results = chain.batch(topics_batch)
+
+# Print results
+for i, (input_dict, result) in enumerate(zip(topics_batch, results), 1):
+    print(f"\n{i}. {input_dict['topic'].upper()}:")
+    print(f"   {result[:100]}...")  # Print first 100 chars</code></pre></div>
+    <div class="output-block"><span class="output-label">Output</span><pre>
+1. RAG:
+   RAG stands for Retrieval-Augmented Generation. It's a way to build a text system that not only "know...
+
+2. LCEL:
+   LCEL isn't a single, universally used term. It can mean different things in different fields. To exp...
+
+3. LANGCHAIN AGENTS:
+   LangChain agents are like small AI assistants that can plan, decide what to do next, and call on too...</pre></div>
+  </div>
+
+  <!-- ===================== CELL 29 ===================== -->
+  <div class="card" id="comparison">
+    <h2>6. LangChain vs Traditional ML Pipelines 🆚</h2>
+    <h3>🔰 BEGINNER: Key Differences</h3>
+    <table>
+      <thead><tr><th>Aspect</th><th>Traditional ML</th><th>LangChain</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Setup</strong></td><td>Complex, manual</td><td>Pre-built components</td></tr>
+        <tr><td><strong>Integration</strong></td><td>Write custom code</td><td>Use existing integrations</td></tr>
+        <tr><td><strong>Composability</strong></td><td>Difficult to chain</td><td>Easy with LCEL</td></tr>
+        <tr><td><strong>Debugging</strong></td><td>Manual logging</td><td>Built-in callbacks</td></tr>
+        <tr><td><strong>Prototyping</strong></td><td>Slow</td><td>Very fast</td></tr>
+        <tr><td><strong>Code Reuse</strong></td><td>Limited</td><td>High</td></tr>
+      </tbody>
+    </table>
+    <h3>Example: Building a Q&A System</h3>
+    <h4>Without LangChain (50+ lines):</h4>
+    <div class="code-block"><span class="code-label">Python</span><pre><code>import openai
+import PyPDF2
+import faiss
+import numpy as np
+
+# 1. Load PDF manually
+def load_pdf(file_path):
+    reader = PyPDF2.PdfReader(file_path)
+    text = ""
+    for page in reader.pages:
+        text += page.extract_text()
+    return text
+
+# 2. Split text manually
+def split_text(text, chunk_size=1000):
+    chunks = []
+    for i in range(0, len(text), chunk_size):
+        chunks.append(text[i:i+chunk_size])
+    return chunks
+
+# 3. Create embeddings manually
+def create_embeddings(chunks):
+    embeddings = []
+    for chunk in chunks:
+        response = openai.Embedding.create(
+            input=chunk,
+            model="text-embedding-ada-002"
+        )
+        embeddings.append(response['data'][0]['embedding'])
+    return np.array(embeddings)
+
+# 4. Create vector store manually
+def create_vector_store(embeddings):
+    dimension = embeddings.shape[1]
+    index = faiss.IndexFlatL2(dimension)
+    index.add(embeddings)
+    return index
+
+# 5. Search manually
+def search(query, index, chunks):
+    query_embedding = openai.Embedding.create(
+        input=query,
+        model="text-embedding-ada-002"
+    )['data'][0]['embedding']
+
+    distances, indices = index.search(
+        np.array([query_embedding]), k=3
+    )
+    return [chunks[i] for i in indices[0]]
+
+# 6. Generate answer manually
+def generate_answer(query, context):
+    prompt = f"Context: {context}\n\nQuestion: {query}\n\nAnswer:"
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return response['choices'][0]['message']['content']
+
+# Use it:
+text = load_pdf("document.pdf")
+chunks = split_text(text)
+embeddings = create_embeddings(chunks)
+index = create_vector_store(embeddings)
+relevant_chunks = search("What is RAG?", index, chunks)
+answer = generate_answer("What is RAG?", " ".join(relevant_chunks))</code></pre></div>
+    <h4>With LangChain (10 lines!):</h4>
+    <div class="code-block"><span class="code-label">Python</span><pre><code>from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_community.vectorstores import FAISS
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+
+# Load, split, embed, and store
+docs = PyPDFLoader("document.pdf").load()
+chunks = RecursiveCharacterTextSplitter(chunk_size=1000).split_documents(docs)
+vectorstore = FAISS.from_documents(chunks, OpenAIEmbeddings())
+retriever = vectorstore.as_retriever()
+
+# Build RAG chain
+prompt = ChatPromptTemplate.from_template(
+    "Context: {context}\n\nQuestion: {question}\n\nAnswer:"
+)
+chain = (
+    {"context": retriever, "question": RunnablePassthrough()}
+    | prompt | ChatOpenAI() | StrOutputParser()
+)
+
+# Use it:
+answer = chain.invoke("What is RAG?")</code></pre></div>
+    <p><strong>50+ lines → 10 lines!</strong> 🎉</p>
+  </div>
+
+  <!-- ===================== CELL 30 ===================== -->
+  <div class="card" id="summary">
+    <h2>7. Summary & Next Steps 📝</h2>
+    <h3>🎉 What You Learned</h3>
+    <p>✅ <strong>LangChain</strong> is a framework that simplifies building LLM applications</p>
+    <p>✅ <strong>Architecture</strong> is modular: loaders, splitters, embeddings, vector stores, chains</p>
+    <p>✅ <strong>Documents</strong> contain <code>page_content</code> (text) and <code>metadata</code> (information about the text)</p>
+    <p>✅ <strong>LCEL</strong> uses the <code>|</code> operator to chain components together</p>
+    <p>✅ <strong>Chains</strong> connect multiple components to create complex workflows</p>
+    <p>✅ LangChain <strong>dramatically reduces code</strong> compared to manual implementations</p>
+    <h3>🔰 For Beginners</h3>
+    <p>You now understand:</p>
+    <ul>
+      <li>What LangChain is and why it's useful</li>
+      <li>How to set up your environment</li>
+      <li>Basic concepts: Documents and Chains</li>
+      <li>How to make your first LLM call</li>
+    </ul>
+    <h3>🎓 For Intermediate Learners</h3>
+    <p>You now understand:</p>
+    <ul>
+      <li>LangChain's package structure (1.0+ reorganization)</li>
+      <li>LCEL internals and advantages</li>
+      <li>Metadata usage for filtering and citation</li>
+      <li>Batch processing for efficiency</li>
+    </ul>
+    <h3>📚 Next Notebooks</h3>
+    <ol>
+      <li><strong>Notebook 02</strong>: Document Loaders (PDF, CSV, JSON, HTML)</li>
+      <li><strong>Notebook 03</strong>: Text Splitting Strategies</li>
+      <li><strong>Notebook 04</strong>: Embeddings and Vector Representations</li>
+      <li><strong>Notebook 05</strong>: Vector Stores (FAISS, Chroma)</li>
+      <li><strong>Notebook 06</strong>: Retrieval Strategies</li>
+      <li><strong>Notebook 07</strong>: Complete RAG Pipeline</li>
+    </ol>
+    <h3>💡 Practice Exercises</h3>
+    <p>Before moving to the next notebook, try these:</p>
+    <ol>
+      <li><strong>Easy</strong>: Create 5 Documents about different topics with meaningful metadata</li>
+      <li><strong>Medium</strong>: Build a chain that takes a topic and generates a haiku about it</li>
+      <li><strong>Advanced</strong>: Create a chain that summarizes text in different styles (formal, casual, technical)</li>
+    </ol>
+    <hr>
+    <h2>🎓 Additional Resources</h2>
+    <ul>
+      <li><a href="https://python.langchain.com/docs/">Official LangChain Documentation</a></li>
+      <li><a href="https://python.langchain.com/docs/expression_language/">LCEL Guide</a></li>
+      <li><a href="https://github.com/langchain-ai/langchain">LangChain GitHub</a></li>
+    </ul>
+    <hr>
+    <p><strong>Ready for more? Continue to Notebook 02: Document Loaders! 🚀</strong></p>
+  </div>
+
+  <!-- ===================== QUICK RECAP ===================== -->
+  <div class="recap" id="quick-recap">
+    <h2>🧠 Quick Recap</h2>
+    <ul>
+      <li>LangChain is a framework that provides pre-built, composable components (loaders, splitters, embeddings, vector stores, retrievers, prompts, LLMs) for building LLM-powered applications instead of writing that infrastructure from scratch.</li>
+      <li>As of LangChain 1.0+, functionality is split across dedicated packages — <code>langchain-core</code>, <code>langchain-community</code>, <code>langchain-openai</code>, and <code>langchain-text-splitters</code> — reducing dependency bloat and improving modularity.</li>
+      <li>A <strong>Document</strong> is the core data structure: it pairs <code>page_content</code> (the raw text) with <code>metadata</code> (source, author, category, etc.), enabling citation, filtering, and debugging.</li>
+      <li><strong>LCEL</strong> (LangChain Expression Language) uses the pipe operator <code>|</code> to compose components into a chain, replacing nested function calls with a linear, readable pipeline.</li>
+      <li>Runnables built with LCEL expose consistent methods: <code>.invoke()</code> for a single input, <code>.batch()</code> for multiple inputs processed efficiently, <code>.stream()</code> for token streaming, and <code>.ainvoke()</code> for async execution.</li>
+      <li>LLM responses come back as <code>AIMessage</code> objects containing <code>.content</code> (the text) and <code>.response_metadata</code> (token usage, model name, finish reason, etc.), which is useful for cost tracking and debugging.</li>
+      <li><strong>ChatPromptTemplate</strong> lets you parameterize prompts with variables (e.g., <code>{topic}</code>) instead of hardcoding strings, making prompts reusable across many inputs.</li>
+      <li>A full RAG pipeline that would take 50+ lines of manual PDF parsing, chunking, embedding, indexing, searching, and prompting collapses to roughly 10 lines using LangChain's loaders, splitters, vector stores, and LCEL chains.</li>
+    </ul>
+  </div>
+
+  <!-- ===================== INTERVIEW PREP ===================== -->
+  <div class="interview" id="interview-prep">
+    <h2>💼 Interview Prep</h2>
+
+    <div class="qa">
+      <div class="q">1. What problem does LangChain solve, and why not just call the LLM API directly?</div>
+      <div class="a">LangChain solves the integration and orchestration problem around LLMs. Calling an LLM API directly gives you a single request/response, but real applications need document loading, chunking, embeddings, vector search, prompt formatting, memory, and tool use — all wired together consistently. LangChain provides pre-built, standardized abstractions for each of these pieces so you compose them instead of building each from scratch, and it gives you a common interface across different LLM providers so swapping models doesn't mean rewriting your application logic.</div>
+      <div class="gotcha"><strong>Gotcha:</strong> An interviewer may push back with "isn't that just extra abstraction overhead for simple use cases?" — a good answer acknowledges that for a single, trivial prompt call, a raw SDK call is simpler, and LangChain's value shows up as complexity grows (RAG, agents, multi-step chains).</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">2. Explain LCEL and why it replaced the older chain-building approach.</div>
+      <div class="a">LCEL, the LangChain Expression Language, lets you compose components using the <code>|</code> pipe operator, so a chain like prompt → LLM → output parser reads as <code>prompt | llm | parser</code> instead of nested function calls like <code>parser(llm(prompt(input)))</code>. Beyond readability, LCEL-built chains automatically get streaming, batching, async support, and consistent error handling because every component implements the same Runnable interface. This uniformity is what makes chains composable — you can swap or insert a new component without restructuring the whole pipeline.</div>
+      <div class="gotcha"><strong>Gotcha:</strong> Be ready to explain the difference between <code>.invoke()</code>, <code>.batch()</code>, and <code>.stream()</code> concretely, and why batch is more efficient than looping <code>.invoke()</code> calls (parallelized/optimized execution under the hood rather than sequential blocking calls).</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">3. What is a Document object in LangChain, and why does metadata matter?</div>
+      <div class="a">A Document is LangChain's standard container for a piece of text plus structured metadata — <code>page_content</code> holds the text itself, and <code>metadata</code> holds attributes like source file, author, category, or page number. Metadata matters because it enables citation (showing users where an answer came from), filtering (restricting retrieval to certain sources or categories), and debugging (tracing which chunks were retrieved for a given query). Without metadata, a retrieval system can return relevant text but can't tell you anything about its provenance.</div>
+      <div class="gotcha"><strong>Gotcha:</strong> An interviewer might ask how metadata is used at query time — the answer is that vector stores typically support metadata filters alongside similarity search, so you can combine semantic relevance with structured constraints (e.g., "only search documents where category=AI").</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">4. How is LangChain organized as of version 1.0+, and why was it split into multiple packages?</div>
+      <div class="a">LangChain 1.0+ splits functionality into separate packages: <code>langchain-core</code> for core abstractions and base classes, <code>langchain-community</code> for community-maintained integrations like document loaders and vector stores, <code>langchain-openai</code> for OpenAI-specific integrations, and <code>langchain-text-splitters</code> for text splitting utilities. This modularization means you only install the dependencies you actually need — if you're only using OpenAI, you don't have to pull in every community integration's dependencies. It also lets each package version and release independently, which improves maintainability.</div>
+      <div class="gotcha"><strong>Gotcha:</strong> Interviewers sometimes probe whether you know this changes import paths (e.g., importing <code>Document</code> from <code>langchain_core.documents</code> rather than top-level <code>langchain</code>) — a version-migration detail that trips people up moving from older LangChain code.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">5. Walk through what happens end-to-end when you call <code>chain.invoke()</code> on a prompt | llm | parser chain.</div>
+      <div class="a">The input dictionary (e.g., <code>{"topic": "embeddings"}</code>) first flows into the prompt template, which fills in the <code>{topic}</code> placeholder and produces a formatted message. That message is passed to the LLM component, which sends it to the model's API and receives back an AIMessage containing the generated content plus response metadata like token usage. Finally, the StrOutputParser extracts just the <code>.content</code> string from that AIMessage, so the caller gets a plain string back instead of having to unwrap the message object themselves.</div>
+      <div class="gotcha"><strong>Gotcha:</strong> A follow-up might ask what happens without the output parser — you'd get the raw AIMessage object back, which still has <code>.content</code> and <code>.response_metadata</code>, so the parser is a convenience step, not a strict requirement.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">6. What's the practical difference between a traditional ML pipeline and a LangChain-based LLM application?</div>
+      <div class="a">A traditional ML pipeline typically involves training a model on labeled data, evaluating it, and deploying that trained artifact — the "intelligence" comes from a model you fit yourself. A LangChain application instead orchestrates a pre-trained LLM by managing what context and instructions reach it — retrieval, prompt construction, and chaining — rather than training anything. This means LangChain-based systems iterate faster (no training loop) but depend heavily on prompt design, retrieval quality, and the underlying model's capabilities rather than on curated training data.</div>
+      <div class="gotcha"><strong>Gotcha:</strong> Don't overstate it — LangChain can still incorporate traditional ML components (e.g., custom embedding models or rerankers), so the distinction is about orchestration versus training, not a hard boundary between the two paradigms.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">7. Why should you never hardcode API keys, and how does LangChain code typically handle credentials?</div>
+      <div class="a">Hardcoding API keys risks leaking them through version control, logs, or shared code, which can lead to unauthorized usage and unexpected billing or security incidents. The standard pattern is to store keys in a <code>.env</code> file that's excluded from Git via <code>.gitignore</code>, then load them at runtime with something like <code>python-dotenv</code>'s <code>load_dotenv()</code>, after which libraries like <code>ChatOpenAI</code> automatically pick up the relevant environment variable (e.g., <code>OPENAI_API_KEY</code>). This keeps secrets out of source code while still making them available to the process.</div>
+      <div class="gotcha"><strong>Gotcha:</strong> An interviewer may ask how you'd handle this in a production/team setting — a stronger answer mentions secrets managers (e.g., AWS Secrets Manager, Vault) instead of relying on local <code>.env</code> files, since those don't scale safely across a team or CI/CD pipeline.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">8. What are the tradeoffs of using <code>.batch()</code> instead of calling <code>.invoke()</code> in a loop?</div>
+      <div class="a"><code>.batch()</code> processes multiple inputs through a chain more efficiently than sequential <code>.invoke()</code> calls, because the underlying implementation can parallelize requests or otherwise optimize execution instead of blocking on each call one at a time. This matters when you need to run the same chain across many inputs, like generating explanations for several topics — batch reduces total latency significantly. The tradeoff is that batch calls can be harder to reason about for partial failures or per-item error handling, and you may hit provider-side rate limits faster if concurrency isn't controlled.</div>
+      <div class="gotcha"><strong>Gotcha:</strong> Be ready to discuss rate limiting and backoff — LangChain's batch methods often accept concurrency controls, and interviewers may ask how you'd avoid overwhelming an API when batching hundreds of inputs.</div>
+    </div>
+
+  </div>
+
+</div>
