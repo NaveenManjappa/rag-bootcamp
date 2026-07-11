@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simple RAG Implementation with LangChain 1.0+</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-main: #fafafa;
+    --bg-card: #ffffff;
+    --text-primary: #1a1a1a;
+    --text-secondary: #555555;
+    --accent: #2563eb;
+    --accent-soft: #eff6ff;
+    --code-bg: #1e1e2e;
+    --code-text: #d4d4d4;
+    --code-border: #333349;
+    --border-light: #e5e7eb;
+    --recap-bg: #fff7ed;
+    --recap-border: #fdba74;
+    --interview-bg: #f0fdf4;
+    --interview-border: #86efac;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--bg-main);
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+  }
+
+  /* ---------- Header ---------- */
+  header.page-head {
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 3px solid var(--accent);
+  }
+  header.page-head h1 {
+    font-size: 2.25rem;
+    line-height: 1.2;
+    margin: 0 0 0.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  header.page-head .subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin: 0;
+    font-weight: 400;
+  }
+
+  /* ---------- TOC ---------- */
+  nav.toc {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    position: sticky;
+    top: 1rem;
+    z-index: 10;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  nav.toc summary {
+    font-weight: 700;
+    font-size: 1.05rem;
+    cursor: pointer;
+    color: var(--accent);
+    outline: none;
+  }
+  nav.toc ol {
+    margin: 1rem 0 0;
+    padding-left: 1.25rem;
+    columns: 2;
+    column-gap: 2rem;
+  }
+  nav.toc li { margin-bottom: 0.4rem; break-inside: avoid; }
+  nav.toc a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.92rem;
+  }
+  nav.toc a:hover { color: var(--accent); text-decoration: underline; }
+
+  @media (max-width: 640px) {
+    nav.toc { position: static; }
+    nav.toc ol { columns: 1; }
+  }
+
+  /* ---------- Markdown cards ---------- */
+  .md {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    padding: 1.5rem 1.75rem;
+    margin: 1.25rem 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .md > *:first-child { margin-top: 0; }
+  .md > *:last-child { margin-bottom: 0; }
+
+  .md h1, .md h2, .md h3, .md h4 {
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+  .md h1 { font-size: 1.9rem; margin: 0.5rem 0 1rem; }
+  .md h2 {
+    font-size: 1.5rem;
+    margin: 1.75rem 0 1rem;
+    padding-left: 0.75rem;
+    border-left: 4px solid var(--accent);
+  }
+  .md h3 {
+    font-size: 1.2rem;
+    margin: 1.5rem 0 0.75rem;
+    color: var(--accent);
+  }
+  .md h4 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
+  .md p { margin: 0.75rem 0; }
+  .md ul, .md ol { margin: 0.75rem 0; padding-left: 1.5rem; }
+  .md li { margin-bottom: 0.35rem; }
+  .md strong { font-weight: 700; }
+  .md a { color: var(--accent); }
+
+  .md code {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 0.12em 0.4em;
+    border-radius: 5px;
+    font-size: 0.88em;
+  }
+
+  /* inline pre inside markdown (ascii diagrams) */
+  .md pre.diagram {
+    background: var(--code-bg);
+    color: var(--code-text);
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    border-left: 4px solid var(--accent);
+  }
+
+  .md hr {
+    border: none;
+    border-top: 1px solid var(--border-light);
+    margin: 1.5rem 0;
+  }
+
+  /* ---------- Code blocks ---------- */
+  .code-wrap {
+    position: relative;
+    margin: 1.25rem 0;
+  }
+  .code-wrap .lang-label {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: var(--code-border);
+    color: var(--code-text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.7rem;
+    border-radius: 0 8px 0 8px;
+  }
+  pre.code {
+    background: var(--code-bg);
+    color: var(--code-text);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 1.5rem 1.5rem 1.25rem;
+    overflow-x: auto;
+    margin: 0;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+  pre.code code {
+    font-family: inherit;
+    background: none;
+    color: inherit;
+    padding: 0;
+  }
+  /* comment coloring */
+  pre.code .cmt { color: #6b7089; font-style: italic; }
+
+  /* ---------- Special sections ---------- */
+  section.recap, section.interview {
+    border-radius: 12px;
+    padding: 1.75rem 2rem;
+    margin: 2.5rem 0;
+  }
+  section.recap {
+    background: var(--recap-bg);
+    border: 2px solid var(--recap-border);
+  }
+  section.interview {
+    background: var(--interview-bg);
+    border: 2px solid var(--interview-border);
+  }
+  section.recap h2, section.interview h2 {
+    margin-top: 0;
+    font-size: 1.6rem;
+    border: none;
+    padding: 0;
+  }
+  section.recap h2 { color: #c2410c; }
+  section.interview h2 { color: #15803d; }
+  section.recap ul { padding-left: 1.4rem; }
+  section.recap li { margin-bottom: 0.6rem; }
+
+  .qa { margin-bottom: 1.5rem; }
+  .qa .q {
+    font-weight: 700;
+    color: #14532d;
+    margin-bottom: 0.35rem;
+  }
+  .qa .a { color: var(--text-primary); margin: 0.35rem 0; }
+  .qa .gotcha {
+    font-size: 0.9rem;
+    background: rgba(255,255,255,0.6);
+    border-left: 3px solid var(--interview-border);
+    padding: 0.5rem 0.85rem;
+    border-radius: 0 6px 6px 0;
+    margin-top: 0.4rem;
+  }
+  .qa .gotcha strong { color: #15803d; }
+
+  .cell-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: #9ca3af;
+    margin: 1.5rem 0 -0.25rem;
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header class="page-head">
+    <h1>Simple RAG (Retrieval-Augmented Generation) Implementation with LangChain 1.0+</h1>
+    <p class="subtitle">An end-to-end RAG pipeline — PDF loading, chunking, OpenAI embeddings, FAISS vector search, and LCEL chain construction.</p>
+  </header>
+
+  <!-- ================= TABLE OF CONTENTS ================= -->
+  <nav class="toc">
+    <details open>
+      <summary>Table of Contents</summary>
+      <ol>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#sec-1">1. Installation &amp; Setup</a></li>
+        <li><a href="#sec-2">2. Import Required Libraries</a></li>
+        <li><a href="#verify-install">Verify Installation</a></li>
+        <li><a href="#sec-3">3. Environment Configuration</a></li>
+        <li><a href="#sec-4">4. Document Loading</a></li>
+        <li><a href="#multi-pdf">Loading Multiple PDFs</a></li>
+        <li><a href="#sec-5">5. Text Splitting</a></li>
+        <li><a href="#sec-6">6. Creating Embeddings</a></li>
+        <li><a href="#sec-7">7. Creating Vector Store (FAISS)</a></li>
+        <li><a href="#load-store">Loading a Saved Vector Store</a></li>
+        <li><a href="#sec-9">9. Configuring the Language Model</a></li>
+        <li><a href="#sec-10">10. Creating the RAG Chain (LCEL)</a></li>
+        <li><a href="#execute">Please you Execute</a></li>
+        <li><a href="#recap">Quick Recap</a></li>
+        <li><a href="#interview">Interview Prep</a></li>
+      </ol>
+    </details>
+  </nav>
+
+  <!-- ================= NOTEBOOK CONTENT ================= -->
+
+  <!-- cell-0 -->
+  <span class="cell-tag">markdown · cell-0</span>
+  <div class="md" id="overview">
+    <h1>Simple RAG (Retrieval-Augmented Generation) Implementation with LangChain 1.0+</h1>
+    <h2>Overview</h2>
+    <p>This notebook demonstrates a complete RAG pipeline using <strong>LangChain 1.0+ with LCEL</strong> (LangChain Expression Language).</p>
+    <h3>What is RAG?</h3>
+    <p>RAG combines retrieval of relevant documents with generation from a Large Language Model (LLM):</p>
+    <ol>
+      <li><strong>Retrieval</strong>: Find relevant information from a knowledge base</li>
+      <li><strong>Augmentation</strong>: Add retrieved context to the prompt</li>
+      <li><strong>Generation</strong>: LLM generates answers based on the context</li>
+    </ol>
+    <h3>Pipeline Flow:</h3>
+    <pre class="diagram">PDF Documents → Load → Split into Chunks → Create Embeddings → Store in Vector DB
+                                                                         ↓
+User Query → Retrieve Similar Chunks → Combine with Query → LLM → Answer</pre>
+    <h3>Components Used:</h3>
+    <ul>
+      <li><strong>Document Loader</strong>: PyPDFLoader (for PDF processing)</li>
+      <li><strong>Text Splitter</strong>: RecursiveCharacterTextSplitter (smart chunking)</li>
+      <li><strong>Embeddings</strong>: OpenAI text-embedding-3-small (vector representations)</li>
+      <li><strong>Vector Store</strong>: FAISS (fast similarity search)</li>
+      <li><strong>LLM</strong>: OpenAI GPT-4-Turbo or GPT-3.5-Turbo</li>
+      <li><strong>Chain Builder</strong>: LCEL (LangChain Expression Language)</li>
+    </ul>
+    <h3>LangChain 1.0+ Features:</h3>
+    <ul>
+      <li>✅ Modern LCEL syntax with pipe operator <code>|</code></li>
+      <li>✅ More readable and composable chains</li>
+      <li>✅ Better streaming support</li>
+      <li>✅ Type-safe operations</li>
+    </ul>
+    <hr>
+  </div>
+
+  <!-- cell-1 -->
+  <span class="cell-tag">markdown · cell-1</span>
+  <div class="md" id="sec-1">
+    <h2>1. Installation &amp; Setup</h2>
+    <p>First, install all required packages. Make sure you have Python 3.9+ installed.</p>
+  </div>
+
+  <!-- cell-2 -->
+  <span class="cell-tag">code · cell-2</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Install required packages</span>
+<span class="cmt"># Uncomment and run ONE of the following options:</span>
+
+<span class="cmt"># Option 1: Install from requirements.txt (RECOMMENDED)</span>
+<span class="cmt"># !pip install -r requirements.txt</span>
+
+<span class="cmt"># Option 2: Install all packages individually</span>
+<span class="cmt"># !pip install langchain langchain-core langchain-openai langchain-community langchain-text-splitters faiss-cpu pypdf python-dotenv tiktoken jupyter notebook</span>
+
+<span class="cmt"># Option 3: Quick install (if you're having import issues)</span>
+<span class="cmt"># !pip install --upgrade langchain langchain-core langchain-openai langchain-community langchain-text-splitters</span></code></pre>
+  </div>
+
+  <!-- cell-3 -->
+  <span class="cell-tag">markdown · cell-3</span>
+  <div class="md" id="sec-2">
+    <h2>2. Import Required Libraries</h2>
+    <p>Import all necessary modules with explanations of what each does.</p>
+  </div>
+
+  <!-- cell-4 -->
+  <span class="cell-tag">markdown · cell-4</span>
+  <div class="md" id="verify-install">
+    <h3>Verify Installation</h3>
+    <p>If you encounter import errors, run this cell first to check package versions:</p>
+  </div>
+
+  <!-- cell-5 -->
+  <span class="cell-tag">code · cell-5</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Check installed package versions</span>
+import sys
+
+try:
+    import langchain
+    print(f"✓ langchain: {langchain.__version__}")
+except:
+    print("✗ langchain not installed")
+
+try:
+    import langchain_core
+    print(f"✓ langchain-core: {langchain_core.__version__}")
+except:
+    print("✗ langchain-core not installed - REQUIRED!")
+    print("  Run: pip install langchain-core")
+
+try:
+    import langchain_openai
+    print(f"✓ langchain-openai: {langchain_openai.__version__}")
+except Exception as e:
+    print("✗ langchain-openai not installed")
+    print(f"✗ langchain-openai not installed ({e})")
+
+try:
+    import langchain_community
+    print(f"✓ langchain-community: {langchain_community.__version__}")
+except:
+    print("✗ langchain-community not installed")
+
+print(f"\nPython version: {sys.version}")
+print("\nIf any packages are missing, run:")
+print("pip install langchain langchain-core langchain-openai langchain-community langchain-text-splitters faiss-cpu pypdf python-dotenv tiktoken")</code></pre>
+  </div>
+
+  <!-- cell-6 -->
+  <span class="cell-tag">code · cell-6</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Standard library imports</span>
+import os
+from pathlib import Path
+
+<span class="cmt"># Environment variable management - for secure API key handling</span>
+from dotenv import load_dotenv
+
+<span class="cmt"># LangChain Document Loaders - for loading PDF documents</span>
+from langchain_community.document_loaders import PyPDFLoader
+
+<span class="cmt"># LangChain Text Splitters - for breaking documents into manageable chunks</span>
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+<span class="cmt"># OpenAI Integration - for embeddings and LLM</span>
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+
+<span class="cmt"># Vector Store - FAISS for efficient similarity search</span>
+from langchain_community.vectorstores import FAISS
+
+<span class="cmt"># LangChain Core Components</span>
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
+
+print("✓ All imports successful!")
+print("✓ Compatible with LangChain 1.0+")</code></pre>
+  </div>
+
+  <!-- cell-7 -->
+  <span class="cell-tag">markdown · cell-7</span>
+  <div class="md" id="sec-3">
+    <h2>3. Environment Configuration</h2>
+    <h3>Setting up OpenAI API Key</h3>
+    <p>You have two options:</p>
+    <ol>
+      <li><strong>Recommended</strong>: Create a <code>.env</code> file with <code>OPENAI_API_KEY=your_key_here</code></li>
+      <li><strong>Alternative</strong>: Set it directly in code (not recommended for production)</li>
+    </ol>
+    <p>Get your API key from: <a href="https://platform.openai.com/api-keys">https://platform.openai.com/api-keys</a></p>
+  </div>
+
+  <!-- cell-8 -->
+  <span class="cell-tag">code · cell-8</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Load environment variables from .env file</span>
+load_dotenv()
+
+<span class="cmt"># Verify API key is loaded</span>
+if not os.getenv("OPENAI_API_KEY"):
+    print("⚠️  WARNING: OPENAI_API_KEY not found!")
+    print("Please set it in .env file or uncomment the line below:")
+    <span class="cmt"># os.environ["OPENAI_API_KEY"] = "your_api_key_here"</span>
+else:
+    print("✓ OpenAI API Key loaded successfully!")
+    print(f"✓ Key starts with: {os.getenv('OPENAI_API_KEY')[:8]}...")</code></pre>
+  </div>
+
+  <!-- cell-9 -->
+  <span class="cell-tag">markdown · cell-9</span>
+  <div class="md" id="sec-4">
+    <h2>4. Document Loading</h2>
+    <h3>Loading PDF Documents</h3>
+    <p>PyPDFLoader extracts text from PDF files page by page. Each page becomes a separate document with metadata (page number, source file).</p>
+    <p><strong>How it works:</strong></p>
+    <ul>
+      <li>Reads PDF files and extracts text content</li>
+      <li>Preserves page numbers for source tracking</li>
+      <li>Returns Document objects with <code>.page_content</code> and <code>.metadata</code></li>
+    </ul>
+    <p><strong>Note</strong>: Update the <code>pdf_path</code> variable to point to your PDF file(s).</p>
+  </div>
+
+  <!-- cell-10 -->
+  <span class="cell-tag">code · cell-10</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># ===== CONFIGURATION: Update this path to your PDF file =====</span>
+pdf_path = "attention.pdf"  <span class="cmt"># Change this to your PDF file path</span>
+<span class="cmt"># =============================================================</span>
+
+<span class="cmt"># Check if file exists</span>
+if not os.path.exists(pdf_path):
+    print(f"⚠️  ERROR: File '{pdf_path}' not found!")
+    print("Please update the pdf_path variable with your PDF file location.")
+else:
+    <span class="cmt"># Initialize the PDF loader</span>
+    loader = PyPDFLoader(pdf_path)
+
+    <span class="cmt"># Load all pages from the PDF</span>
+    <span class="cmt"># Each page becomes a separate Document object</span>
+    documents = loader.load()
+
+    <span class="cmt"># Display information about loaded documents</span>
+    print(f"✓ Loaded {len(documents)} pages from '{pdf_path}'")
+    print(f"\n--- First Document Preview ---")
+    print(f"Content (first 500 chars): {documents[0].page_content[:500]}...")
+    print(f"\nMetadata: {documents[0].metadata}")
+    print(f"\nTotal characters across all pages: {sum(len(doc.page_content) for doc in documents):,}")</code></pre>
+  </div>
+
+  <!-- cell-11 -->
+  <span class="cell-tag">markdown · cell-11</span>
+  <div class="md" id="multi-pdf">
+    <h3>Loading Multiple PDFs (Optional)</h3>
+    <p>If you have multiple PDF files, you can load them all at once:</p>
+  </div>
+
+  <!-- cell-12 -->
+  <span class="cell-tag">code · cell-12</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Example: Loading multiple PDFs from a directory</span>
+<span class="cmt"># Uncomment and modify if you want to load multiple files</span>
+
+pdf_directory = "./pdfs"  <span class="cmt"># Directory containing your PDFs</span>
+all_documents = []
+
+if os.path.exists(pdf_directory):
+    pdf_files = list(Path(pdf_directory).glob("*.pdf"))
+    print(f"Found {len(pdf_files)} PDF files")
+
+    for pdf_file in pdf_files:
+        loader = PyPDFLoader(str(pdf_file))
+        docs = loader.load()
+        all_documents.extend(docs)
+        print(f"  ✓ Loaded {len(docs)} pages from {pdf_file.name}")
+
+    print(f"\nTotal pages loaded: {len(all_documents)}")
+    documents = all_documents  <span class="cmt"># Use this for the rest of the pipeline</span></code></pre>
+  </div>
+
+  <!-- cell-13 -->
+  <span class="cell-tag">markdown · cell-13</span>
+  <div class="md" id="sec-5">
+    <h2>5. Text Splitting</h2>
+    <h3>Why Split Documents?</h3>
+    <ul>
+      <li>LLMs have token limits (e.g., 4K, 8K, 128K tokens)</li>
+      <li>Smaller chunks = more precise retrieval</li>
+      <li>Balance: chunks must be large enough to contain meaningful context but small enough to be specific</li>
+    </ul>
+    <h3>RecursiveCharacterTextSplitter</h3>
+    <p>This splitter tries to keep related text together by recursively splitting on:</p>
+    <ol>
+      <li>Paragraphs (<code>\n\n</code>)</li>
+      <li>Lines (<code>\n</code>)</li>
+      <li>Sentences (<code>. </code>)</li>
+      <li>Words (<code> </code>)</li>
+      <li>Characters (as last resort)</li>
+    </ol>
+    <p><strong>Parameters:</strong></p>
+    <ul>
+      <li><code>chunk_size=1024</code>: Target size for each chunk (in characters)</li>
+      <li><code>chunk_overlap=128</code>: Overlap between chunks to maintain context continuity</li>
+      <li>Overlap prevents important information from being split across chunks</li>
+    </ul>
+  </div>
+
+  <!-- cell-14 -->
+  <span class="cell-tag">code · cell-14</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Initialize the text splitter with recommended settings</span>
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=1024,        <span class="cmt"># Maximum characters per chunk (roughly 200-250 tokens)</span>
+    chunk_overlap=128,      <span class="cmt"># Characters overlap between chunks (maintains context)</span>
+    length_function=len,    <span class="cmt"># Function to measure chunk length</span>
+    separators=["\n\n", "\n", " ", ""]  <span class="cmt"># Try to split on paragraphs first, then lines, etc.</span>
+)
+
+<span class="cmt"># Split the documents into chunks</span>
+<span class="cmt"># This creates smaller, manageable pieces while preserving semantic meaning</span>
+chunks = text_splitter.split_documents(documents)
+
+<span class="cmt"># Display splitting results</span>
+print(f"✓ Split {len(documents)} documents into {len(chunks)} chunks")
+print(f"\nAverage chunk size: {sum(len(chunk.page_content) for chunk in chunks) / len(chunks):.0f} characters")
+
+<span class="cmt"># Preview a few chunks</span>
+print(f"\n--- Chunk Examples ---")
+for i, chunk in enumerate(chunks[:3]):
+    print(f"\nChunk {i+1} (length: {len(chunk.page_content)} chars):")
+    print(f"{chunk.page_content[:200]}...")
+    print(f"Metadata: {chunk.metadata}")</code></pre>
+  </div>
+
+  <!-- cell-15 -->
+  <span class="cell-tag">markdown · cell-15</span>
+  <div class="md" id="sec-6">
+    <h2>6. Creating Embeddings</h2>
+    <h3>What are Embeddings?</h3>
+    <p>Embeddings are vector representations of text that capture semantic meaning. Similar texts have similar vectors.</p>
+    <p><strong>Example</strong>:</p>
+    <ul>
+      <li>"dog" and "puppy" → similar vectors (close in vector space)</li>
+      <li>"dog" and "spaceship" → different vectors (far apart)</li>
+    </ul>
+    <h3>OpenAI text-embedding-3-small</h3>
+    <ul>
+      <li><strong>Dimensions</strong>: 1536 (each text becomes a 1536-dimensional vector)</li>
+      <li><strong>Cost</strong>: $0.00002 per 1,000 tokens (very affordable)</li>
+      <li><strong>Performance</strong>: 62.3% on MTEB benchmark</li>
+      <li><strong>Speed</strong>: Fast and efficient</li>
+    </ul>
+    <p><strong>Alternative</strong>: <code>text-embedding-3-large</code> for higher quality (64.6% MTEB) at higher cost</p>
+  </div>
+
+  <!-- cell-16 -->
+  <span class="cell-tag">code · cell-16</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Initialize OpenAI Embeddings</span>
+embeddings = OpenAIEmbeddings(
+    model="text-embedding-3-small",  <span class="cmt"># Latest, cost-effective embedding model</span>
+    <span class="cmt"># Alternative: "text-embedding-3-large" for better quality</span>
+)
+
+<span class="cmt"># Test the embeddings with a sample text</span>
+sample_text = "This is a test sentence to demonstrate embeddings."
+sample_embedding = embeddings.embed_query(sample_text)
+
+print(f"✓ Embeddings model initialized: text-embedding-3-small")
+print(f"✓ Embedding dimension: {len(sample_embedding)}")
+print(f"✓ Sample embedding (first 10 values): {sample_embedding[:10]}")
+print(f"\nℹ️  Each chunk will be converted to a {len(sample_embedding)}-dimensional vector for similarity search")</code></pre>
+  </div>
+
+  <!-- cell-17 -->
+  <span class="cell-tag">markdown · cell-17</span>
+  <div class="md" id="sec-7">
+    <h2>7. Creating Vector Store (FAISS)</h2>
+    <h3>What is a Vector Store?</h3>
+    <p>A vector store (or vector database) stores embeddings and enables fast similarity search.</p>
+    <h3>FAISS (Facebook AI Similarity Search)</h3>
+    <ul>
+      <li><strong>Fast</strong>: Optimized for billion-scale vector search</li>
+      <li><strong>Local</strong>: Runs on your machine, no cloud dependency</li>
+      <li><strong>Efficient</strong>: Uses advanced indexing algorithms</li>
+    </ul>
+    <h3>How Similarity Search Works:</h3>
+    <ol>
+      <li>Convert query to embedding vector</li>
+      <li>Find vectors in the database most similar to query vector (using cosine similarity or Euclidean distance)</li>
+      <li>Return the corresponding text chunks</li>
+    </ol>
+    <p><strong>This cell will:</strong></p>
+    <ol>
+      <li>Convert all chunks to embeddings (may take a minute for large documents)</li>
+      <li>Build a FAISS index</li>
+      <li>Save to disk for future use</li>
+    </ol>
+  </div>
+
+  <!-- cell-18 -->
+  <span class="cell-tag">code · cell-18</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Create FAISS vector store from document chunks</span>
+<span class="cmt"># This step converts each chunk to an embedding and stores it</span>
+print(f"Creating FAISS index from {len(chunks)} chunks...")
+print("This may take a minute depending on the number of chunks...")
+
+vectorstore = FAISS.from_documents(
+    documents=chunks,      <span class="cmt"># Our split document chunks</span>
+    embedding=embeddings   <span class="cmt"># OpenAI embedding model</span>
+)
+
+print(f"✓ FAISS vector store created successfully!")
+print(f"✓ Indexed {len(chunks)} document chunks")
+
+<span class="cmt"># Save the vector store to disk for later use</span>
+<span class="cmt"># This allows you to reload the index without re-processing documents</span>
+vectorstore_path = "./faiss_index"
+vectorstore.save_local(vectorstore_path)
+print(f"✓ Vector store saved to '{vectorstore_path}'")
+print(f"\nℹ️  You can reload this index later using: FAISS.load_local('{vectorstore_path}', embeddings)")</code></pre>
+  </div>
+
+  <!-- cell-19 -->
+  <span class="cell-tag">markdown · cell-19</span>
+  <div class="md" id="load-store">
+    <h3>Loading a Saved Vector Store (Optional)</h3>
+    <p>If you've already created a vector store, you can load it instead of recreating:</p>
+  </div>
+
+  <!-- cell-20 -->
+  <span class="cell-tag">code · cell-20</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt">#Uncomment to load an existing vector store instead of creating a new one</span>
+vectorstore_path = "./faiss_index"
+vectorstore = FAISS.load_local(
+    vectorstore_path,
+    embeddings,
+    allow_dangerous_deserialization=True  <span class="cmt"># Required for loading pickled data</span>
+)
+print(f"✓ Loaded existing vector store from '{vectorstore_path}'")</code></pre>
+  </div>
+
+  <!-- cell-21 -->
+  <span class="cell-tag">code · cell-21</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Create a retriever from the vector store</span>
+retriever = vectorstore.as_retriever(
+    search_type="similarity",    <span class="cmt"># Use cosine similarity for search</span>
+    search_kwargs={"k": 4}        <span class="cmt"># Retrieve top 4 most relevant chunks</span>
+)
+
+print("✓ Retriever configured successfully")
+print(f"  - Search type: similarity")
+print(f"  - Number of documents to retrieve (k): 4")
+
+<span class="cmt"># Test the retriever with a sample query</span>
+<span class="cmt"># Note: In LangChain 1.0+, use .invoke() instead of .get_relevant_documents()</span>
+test_query = "What is the main topic of this document?"
+retrieved_docs = retriever.invoke(test_query)  <span class="cmt"># LangChain 1.0+ method</span>
+
+print(f"\n--- Retriever Test ---")
+print(f"Query: '{test_query}'")
+print(f"Retrieved {len(retrieved_docs)} documents:")
+
+for i, doc in enumerate(retrieved_docs):
+    print(f"\nDocument {i+1}:")
+    print(f"  Content preview: {doc.page_content[:150]}...")
+    print(f"  Metadata: {doc.metadata}")</code></pre>
+  </div>
+
+  <!-- cell-22 -->
+  <span class="cell-tag">markdown · cell-22</span>
+  <div class="md" id="sec-9">
+    <h2>9. Configuring the Language Model (LLM)</h2>
+    <h3>LLM Selection</h3>
+    <p>The LLM generates the final answer based on retrieved context.</p>
+    <h3>Available Models:</h3>
+    <ol>
+      <li><strong>gpt-4-turbo-2025-04-09</strong>: Most capable, best quality, slower, more expensive</li>
+      <li><strong>gpt-4o</strong>: Fast GPT-4 level performance, good balance</li>
+      <li><strong>gpt-3.5-turbo</strong>: Fast and cheap, good for simpler queries</li>
+    </ol>
+    <h3>Temperature:</h3>
+    <ul>
+      <li><strong>0</strong>: Deterministic, focused answers (recommended for factual Q&amp;A)</li>
+      <li><strong>0.7</strong>: More creative, varied responses</li>
+      <li><strong>1.0</strong>: Most creative, less predictable</li>
+    </ul>
+    <h3>Max Tokens:</h3>
+    <p>Controls the maximum length of the generated response.</p>
+  </div>
+
+  <!-- cell-23 -->
+  <span class="cell-tag">code · cell-23</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Initialize the ChatOpenAI model</span>
+llm = ChatOpenAI(
+      model="gpt-4-turbo-2024-04-09",  <span class="cmt"># Choose your model</span>
+      <span class="cmt"># Alternative options:</span>
+      <span class="cmt"># model="gpt-4o",           # Faster GPT-4 performance, good </span>
+      <span class="cmt"># balance,</span>
+      <span class="cmt"># model="gpt-3.5-turbo",    # Faster and cheaper option</span>
+
+      temperature=0,         <span class="cmt"># 0 = deterministic, factual responses (recommended for Q&A)</span>
+      max_tokens=2000,       <span class="cmt"># Maximum length of response</span>
+  )
+
+print("✓ LLM configured successfully")
+print(f"  - Model: gpt-4-turbo-2024-04-09")
+print(f"  - Temperature: 0 (deterministic)")
+print(f"  - Max tokens: 2000")
+
+<span class="cmt"># Test the LLM with a simple query</span>
+test_response = llm.invoke("Say 'Hello, I am ready to answer questions!'")
+print(f"\nLLM Test Response: {test_response.content}")
+
+<span class="cmt">#   📝 Explanation of Parameters:</span>
+
+<span class="cmt">#   Model Selection:</span>
+
+<span class="cmt">#   # Option 1: Best quality (slower, more expensive)</span>
+<span class="cmt">#   llm = ChatOpenAI(model="gpt-4-turbo-2024-04-09")</span>
+
+<span class="cmt">#   # Option 2: Fast GPT-4 performance (balanced)</span>
+<span class="cmt">#   llm = ChatOpenAI(model="gpt-4o")</span>
+
+<span class="cmt">#   # Option 3: Fast and cheap (good for testing)</span>
+<span class="cmt">#   llm = ChatOpenAI(model="gpt-3.5-turbo")</span>
+
+<span class="cmt">#   Temperature:</span>
+
+<span class="cmt">#   temperature=0    # Deterministic, focused (best for factual Q&A)</span>
+<span class="cmt">#   temperature=0.7  # More creative, varied responses</span>
+<span class="cmt">#   temperature=1.0  # Most creative, less predictable</span>
+
+<span class="cmt">#   Max Tokens:</span>
+
+<span class="cmt">#   max_tokens=2000  # Controls maximum response length</span></code></pre>
+  </div>
+
+  <!-- cell-24 -->
+  <span class="cell-tag">markdown · cell-24</span>
+  <div class="md" id="sec-10">
+    <h2>10. Creating the RAG Chain (LangChain 1.0+ LCEL)</h2>
+    <h3>What is a RAG Chain?</h3>
+    <p>The RAG chain combines retrieval and generation into a single workflow:</p>
+    <ol>
+      <li>User asks a question</li>
+      <li>Retriever finds relevant documents</li>
+      <li>Documents are formatted as context</li>
+      <li>LLM generates answer using the context</li>
+    </ol>
+    <h3>LangChain 1.0+ LCEL (LangChain Expression Language)</h3>
+    <p>LangChain 1.0+ uses LCEL, a declarative way to build chains using the pipe operator <code>|</code>.</p>
+    <p><strong>Benefits:</strong></p>
+    <ul>
+      <li>More intuitive and readable</li>
+      <li>Better streaming support</li>
+      <li>Easier to debug and modify</li>
+      <li>Type-safe and composable</li>
+    </ul>
+    <p><strong>Components:</strong></p>
+    <ul>
+      <li><strong>RunnablePassthrough</strong>: Passes input through unchanged</li>
+      <li><strong>Pipe operator (|)</strong>: Chains components together</li>
+      <li><strong>StrOutputParser</strong>: Converts LLM output to string</li>
+    </ul>
+  </div>
+
+  <!-- cell-25 -->
+  <span class="cell-tag">code · cell-25</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt">#Step 1: Create the Retriever </span>
+<span class="cmt"># Create a retriever from the vector store</span>
+retriever = vectorstore.as_retriever(
+      search_type="similarity",    <span class="cmt"># Use cosine similarity for search</span>
+      search_kwargs={"k": 4}        <span class="cmt"># Retrieve top 4 most relevant chunks</span>
+  )
+
+print("✓ Retriever configured successfully")
+print(f"  - Search type: similarity")
+print(f"  - Number of documents to retrieve (k): 4")
+
+  <span class="cmt"># Test the retriever with a sample query</span>
+test_query = "What is the main topic of this document?"
+retrieved_docs = retriever.invoke(test_query)
+
+print(f"\n--- Retriever Test ---")
+print(f"Query: '{test_query}'")
+print(f"Retrieved {len(retrieved_docs)} documents:")
+
+for i, doc in enumerate(retrieved_docs):
+    print(f"\nDocument {i+1}:")
+    print(f"  Content preview: {doc.page_content[:150]}...")
+    print(f"  Metadata: {doc.metadata}")</code></pre>
+  </div>
+
+  <!-- cell-26 -->
+  <span class="cell-tag">code · cell-26</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Define the prompt template for the RAG system</span>
+<span class="cmt"># This tells the LLM how to use the retrieved context</span>
+system_prompt = (
+    "You are a helpful assistant for question-answering tasks. "
+    "Use the following pieces of retrieved context to answer the question. "
+    "If you don't know the answer based on the context, say that you don't know. "
+    "Keep the answer concise and accurate.\n\n"
+    "Context: {context}\n\n"
+    "Question: {question}"
+)
+
+<span class="cmt"># Create the prompt template</span>
+prompt = ChatPromptTemplate.from_template(system_prompt)
+
+<span class="cmt"># Helper function to format documents</span>
+def format_docs(docs):
+    """Format retrieved documents into a single string."""
+    return "\n\n".join(doc.page_content for doc in docs)
+
+<span class="cmt"># Build the RAG chain using LangChain 1.0+ LCEL (LangChain Expression Language)</span>
+<span class="cmt"># This uses the pipe operator (|) to chain components together</span>
+rag_chain = (
+    {
+        "context": retriever | format_docs,  <span class="cmt"># Retrieve docs and format them</span>
+        "question": RunnablePassthrough()      <span class="cmt"># Pass through the question</span>
+    }
+    | prompt           <span class="cmt"># Format with prompt template</span>
+    | llm              <span class="cmt"># Generate answer with LLM</span>
+    | StrOutputParser() <span class="cmt"># Parse output to string</span>
+)
+
+print("✓ RAG chain created successfully using LangChain 1.0+ LCEL!")
+print("\nRAG Pipeline Flow:")
+print("  1. User provides a query")
+print("  2. Retriever finds top 4 relevant chunks")
+print("  3. Chunks are formatted as context")
+print("  4. Context + question are formatted with prompt template")
+print("  5. LLM generates answer based on context")
+print("  6. Answer is parsed and returned to user")</code></pre>
+  </div>
+
+  <!-- cell-27 -->
+  <span class="cell-tag">code · cell-27</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Example Query 1: General question about the document</span>
+query1 = "What is the main topic or subject of this document?"
+
+print(f"Query: {query1}")
+print("\nProcessing...\n")
+
+<span class="cmt"># With LangChain 1.0+, we invoke the chain with the question directly</span>
+answer = rag_chain.invoke(query1)
+
+print("=" * 80)
+print("ANSWER:")
+print("=" * 80)
+print(answer)
+print("\n" + "=" * 80)
+
+<span class="cmt"># To see which documents were retrieved, we can call the retriever separately</span>
+print("\nSOURCE DOCUMENTS USED:")
+print("=" * 80)
+retrieved_docs = retriever.invoke(query1)
+for i, doc in enumerate(retrieved_docs):
+    print(f"\nDocument {i+1}:")
+    print(f"  Source: {doc.metadata}")
+    print(f"  Content: {doc.page_content[:200]}...")
+    print("-" * 80)</code></pre>
+  </div>
+
+  <!-- cell-28 -->
+  <span class="cell-tag">code · cell-28</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Example Query 2: Specific information extraction</span>
+query2 = "Can you summarize the key points from this document?"
+
+print(f"Query: {query2}")
+print("\nProcessing...\n")
+
+answer = rag_chain.invoke(query2)
+
+print("=" * 80)
+print("ANSWER:")
+print("=" * 80)
+print(answer)
+print("\n" + "=" * 80)</code></pre>
+  </div>
+
+  <!-- cell-29 -->
+  <span class="cell-tag">markdown · cell-29</span>
+  <div class="md" id="execute">
+    <h3>Please you Execute</h3>
+  </div>
+
+  <!-- cell-30 -->
+  <span class="cell-tag">code · cell-30</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Example Query 3: Your custom question</span>
+<span class="cmt"># Replace this with your own question!</span>
+custom_query = "What specific details are mentioned about vector embeddings?"
+
+print(f"Query: {custom_query}")
+print("\nProcessing...\n")
+
+answer = rag_chain.invoke(custom_query)
+
+print("=" * 80)
+print("ANSWER:")
+print("=" * 80)
+print(answer)
+print("\n" + "=" * 80)</code></pre>
+  </div>
+
+  <!-- cell-31 -->
+  <span class="cell-tag">code · cell-31</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Example Query 3: Your custom question</span>
+<span class="cmt"># Replace this with your own question!</span>
+custom_query = "What specific details are mentioned about cricket?"
+
+print(f"Query: {custom_query}")
+print("\nProcessing...\n")
+
+response3 = rag_chain.invoke( custom_query)
+
+print("=" * 80)
+print("ANSWER:")
+print("=" * 80)
+print(response3)
+print("\n" + "=" * 80)</code></pre>
+  </div>
+
+  <!-- ================= QUICK RECAP ================= -->
+  <section class="recap" id="recap">
+    <h2>Quick Recap</h2>
+    <ul>
+      <li><strong>RAG pipeline stages</strong>: documents are loaded, split into chunks, embedded into vectors, and stored in a vector index; at query time relevant chunks are retrieved and passed to the LLM as context before generation.</li>
+      <li><strong>Document loading</strong>: <code>PyPDFLoader</code> reads a PDF page-by-page into <code>Document</code> objects, each carrying <code>page_content</code> plus <code>metadata</code> (source file, page number) used for provenance tracking.</li>
+      <li><strong>Chunking</strong>: <code>RecursiveCharacterTextSplitter</code> splits on a priority list of separators (paragraph → line → word → char) with <code>chunk_size=1024</code> and <code>chunk_overlap=128</code>; overlap preserves context that would otherwise be cut at chunk boundaries.</li>
+      <li><strong>Embeddings</strong>: OpenAI <code>text-embedding-3-small</code> maps each chunk to a fixed 1536-dimensional vector, so semantically similar text lands close together in vector space.</li>
+      <li><strong>Vector store</strong>: FAISS builds a local similarity-search index over the chunk embeddings, can be persisted with <code>save_local</code> and reloaded with <code>load_local</code> (requires <code>allow_dangerous_deserialization=True</code> because the index is pickled).</li>
+      <li><strong>Retriever</strong>: <code>vectorstore.as_retriever</code> with <code>search_type="similarity"</code> and <code>k=4</code> returns the top-4 nearest chunks for a query; in LangChain 1.0+ it is called with <code>.invoke()</code> rather than the deprecated <code>.get_relevant_documents()</code>.</li>
+      <li><strong>LCEL chain</strong>: the pipe operator composes a dict of <code>{context, question}</code> → prompt template → <code>ChatOpenAI</code> (temperature 0 for deterministic answers) → <code>StrOutputParser</code>; <code>RunnablePassthrough</code> forwards the raw question unchanged.</li>
+      <li><strong>Grounded generation</strong>: the system prompt instructs the model to answer only from retrieved context and to admit when it does not know — the design intent behind the out-of-scope "cricket" query.</li>
+    </ul>
+  </section>
+
+  <!-- ================= INTERVIEW PREP ================= -->
+  <section class="interview" id="interview">
+    <h2>Interview Prep</h2>
+
+    <div class="qa">
+      <div class="q">1. What problem does RAG solve that a plain LLM does not?</div>
+      <p class="a">A plain LLM answers only from its frozen training data, so it hallucinates on private or recent information and can't cite sources. RAG grounds generation in an external knowledge base by retrieving relevant chunks at query time and injecting them into the prompt. This gives up-to-date, domain-specific, and verifiable answers without retraining the model. It also lets you update knowledge simply by re-indexing documents.</p>
+      <div class="gotcha"><strong>Gotcha:</strong> RAG reduces but does not eliminate hallucination — if retrieval returns irrelevant chunks, the model can still fabricate. Retrieval quality is the real bottleneck, not the LLM.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">2. Why do we chunk documents, and how do you choose chunk size and overlap?</div>
+      <p class="a">Chunking keeps each retrieved unit within the LLM's context budget and makes retrieval more precise, since smaller units target specific facts. Chunk size trades off context completeness against specificity — too large adds noise, too small loses meaning. Overlap (e.g. 128 chars) prevents a key sentence from being severed at a boundary. I'd tune these against the document structure and evaluate retrieval quality empirically.</p>
+      <div class="gotcha"><strong>Gotcha:</strong> Character-based sizing is a rough proxy for tokens; interviewers may ask why token-aware splitting or semantic/structure-aware chunking can outperform fixed character windows.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">3. What is an embedding and why is cosine similarity used for retrieval?</div>
+      <p class="a">An embedding is a dense vector that encodes the semantic meaning of text, so similar meanings map to nearby points. Retrieval converts the query to the same vector space and finds the closest chunk vectors. Cosine similarity compares direction rather than magnitude, which is robust to differing text lengths. The same embedding model must be used for both indexing and querying so the vectors are comparable.</p>
+      <div class="gotcha"><strong>Gotcha:</strong> If you re-index with a different embedding model than you query with, results are garbage — the vector spaces are incompatible.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">4. What is FAISS and when would you outgrow it?</div>
+      <p class="a">FAISS is a local, in-memory library for fast approximate and exact nearest-neighbor search over dense vectors, optimized for large scale. It's ideal for prototypes and single-node workloads because it has no external dependency and is very fast. You'd outgrow it when you need distributed scale, metadata filtering at scale, real-time updates, or managed persistence — then a dedicated vector DB like Qdrant, Pinecone, or pgvector fits better. FAISS persistence here is just pickled files on disk.</p>
+      <div class="gotcha"><strong>Gotcha:</strong> <code>allow_dangerous_deserialization=True</code> is required to reload a FAISS index because it unpickles arbitrary Python — never load an index from an untrusted source.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">5. Explain the LCEL chain built in this notebook, component by component.</div>
+      <p class="a">The chain uses the pipe operator to compose runnables declaratively. First a dictionary maps <code>context</code> to <code>retriever | format_docs</code> and <code>question</code> to <code>RunnablePassthrough()</code>, so both fields are computed from the single input query. That dict feeds the <code>ChatPromptTemplate</code>, whose output goes to the <code>ChatOpenAI</code> model, and finally <code>StrOutputParser</code> extracts plain text from the message. The result is a composable, streamable, type-checked pipeline invoked with a single <code>.invoke(query)</code>.</p>
+      <div class="gotcha"><strong>Gotcha:</strong> The dict branch runs its values in parallel; <code>RunnablePassthrough</code> exists precisely because the prompt needs the raw question alongside the retrieved context — forgetting it breaks the <code>{question}</code> template variable.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">6. Why set temperature to 0 for a Q&amp;A RAG system?</div>
+      <p class="a">Temperature 0 makes generation effectively deterministic, favoring the highest-probability tokens. For factual question-answering grounded in retrieved context, we want faithful, reproducible answers rather than creative variation. Higher temperatures increase the risk of the model drifting from the provided context. Reproducibility also makes evaluation and debugging far easier.</p>
+      <div class="gotcha"><strong>Gotcha:</strong> Temperature 0 is not a hallucination guarantee — the model deterministically produces its most likely answer, which can still be wrong if the retrieved context is poor.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">7. How does the system avoid answering questions outside the knowledge base?</div>
+      <p class="a">The system prompt explicitly instructs the model to use only the retrieved context and to say it doesn't know when the answer isn't present. Combined with temperature 0, this makes the model decline gracefully rather than inventing facts. This prompt-level grounding is the primary guardrail in a basic RAG setup. Stronger systems add relevance thresholds or a verification step on top.</p>
+      <div class="gotcha"><strong>Gotcha:</strong> The retriever still returns its top-k chunks even for an irrelevant query — there's no similarity-score cutoff here, so grounding relies entirely on the prompt instruction, which is not foolproof.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">8. How would you evaluate and improve this RAG pipeline?</div>
+      <p class="a">I'd evaluate retrieval and generation separately: retrieval with recall/precision or hit-rate on a labeled query set, and generation with faithfulness and answer-relevance metrics (e.g. RAGAS or an LLM-judge). Improvements include better chunking, hybrid sparse+dense retrieval, re-ranking the retrieved candidates, metadata filtering, and query rewriting. I'd also add a similarity threshold so weak matches are dropped. Measuring before tuning prevents chasing changes that don't move quality.</p>
+      <div class="gotcha"><strong>Gotcha:</strong> A common mistake is optimizing the LLM prompt when the real failure is retrieval — always confirm whether the correct chunk was even retrieved before blaming generation.</div>
+    </div>
+
+  </section>
+
+</div>
+</body>
+</html>
