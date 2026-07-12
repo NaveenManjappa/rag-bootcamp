@@ -2,3 +2,4 @@ simple-rag-langchain/__MACOSX
 .env
 simple-rag-langchain/faiss_index/index.pkl
 simple-rag-langchain/faiss_index/index.faiss
+my-rag-bootcamp/Content/resume.pdf

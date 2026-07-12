@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Local Offline RAG with Ollama</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-main: #fafafa;
+    --bg-card: #ffffff;
+    --text-primary: #1a1a1a;
+    --text-secondary: #555555;
+    --accent: #2563eb;
+    --accent-soft: #eff6ff;
+    --code-bg: #1e1e2e;
+    --code-text: #d4d4d4;
+    --code-border: #333349;
+    --border-light: #e5e7eb;
+    --recap-bg: #fff7ed;
+    --recap-border: #fdba74;
+    --interview-bg: #f0fdf4;
+    --interview-border: #86efac;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--bg-main);
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+  }
+
+  /* ---------- Header ---------- */
+  header.page-head {
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 3px solid var(--accent);
+  }
+  header.page-head h1 {
+    font-size: 2.25rem;
+    line-height: 1.2;
+    margin: 0 0 0.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  header.page-head .subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin: 0;
+    font-weight: 400;
+  }
+
+  /* ---------- TOC ---------- */
+  nav.toc {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    position: sticky;
+    top: 1rem;
+    z-index: 10;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  nav.toc summary {
+    font-weight: 700;
+    font-size: 1.05rem;
+    cursor: pointer;
+    color: var(--accent);
+    outline: none;
+  }
+  nav.toc ol {
+    margin: 1rem 0 0;
+    padding-left: 1.25rem;
+    columns: 2;
+    column-gap: 2rem;
+  }
+  nav.toc li { margin-bottom: 0.4rem; break-inside: avoid; }
+  nav.toc a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.92rem;
+  }
+  nav.toc a:hover { color: var(--accent); text-decoration: underline; }
+
+  @media (max-width: 640px) {
+    nav.toc { position: static; }
+    nav.toc ol { columns: 1; }
+  }
+
+  /* ---------- Markdown cards ---------- */
+  .md {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    padding: 1.5rem 1.75rem;
+    margin: 1.25rem 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .md > *:first-child { margin-top: 0; }
+  .md > *:last-child { margin-bottom: 0; }
+
+  .md h1, .md h2, .md h3, .md h4 {
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+  .md h1 { font-size: 1.9rem; margin: 0.5rem 0 1rem; }
+  .md h2 {
+    font-size: 1.5rem;
+    margin: 1.75rem 0 1rem;
+    padding-left: 0.75rem;
+    border-left: 4px solid var(--accent);
+  }
+  .md h3 {
+    font-size: 1.2rem;
+    margin: 1.5rem 0 0.75rem;
+    color: var(--accent);
+  }
+  .md h4 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
+  .md p { margin: 0.75rem 0; }
+  .md ul, .md ol { margin: 0.75rem 0; padding-left: 1.5rem; }
+  .md li { margin-bottom: 0.35rem; }
+  .md strong { font-weight: 700; }
+  .md a { color: var(--accent); }
+
+  .md code {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 0.12em 0.4em;
+    border-radius: 5px;
+    font-size: 0.88em;
+  }
+
+  /* inline pre inside markdown (ascii diagrams) */
+  .md pre.diagram {
+    background: var(--code-bg);
+    color: var(--code-text);
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    border-left: 4px solid var(--accent);
+  }
+
+  .md hr {
+    border: none;
+    border-top: 1px solid var(--border-light);
+    margin: 1.5rem 0;
+  }
+
+  /* ---------- Code blocks ---------- */
+  .code-wrap {
+    position: relative;
+    margin: 1.25rem 0;
+  }
+  .code-wrap .lang-label {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: var(--code-border);
+    color: var(--code-text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.7rem;
+    border-radius: 0 8px 0 8px;
+  }
+  pre.code {
+    background: var(--code-bg);
+    color: var(--code-text);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 1.5rem 1.5rem 1.25rem;
+    overflow-x: auto;
+    margin: 0;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+  pre.code code {
+    font-family: inherit;
+    background: none;
+    color: inherit;
+    padding: 0;
+  }
+  /* comment coloring */
+  pre.code .cmt { color: #6b7089; font-style: italic; }
+
+  /* ---------- Special sections ---------- */
+  section.recap, section.interview {
+    border-radius: 12px;
+    padding: 1.75rem 2rem;
+    margin: 2.5rem 0;
+  }
+  section.recap {
+    background: var(--recap-bg);
+    border: 2px solid var(--recap-border);
+  }
+  section.interview {
+    background: var(--interview-bg);
+    border: 2px solid var(--interview-border);
+  }
+  section.recap h2, section.interview h2 {
+    margin-top: 0;
+    font-size: 1.6rem;
+    border: none;
+    padding: 0;
+  }
+  section.recap h2 { color: #c2410c; }
+  section.interview h2 { color: #15803d; }
+  section.recap ul { padding-left: 1.4rem; }
+  section.recap li { margin-bottom: 0.6rem; }
+
+  .qa { margin-bottom: 1.5rem; }
+  .qa .q {
+    font-weight: 700;
+    color: #14532d;
+    margin-bottom: 0.35rem;
+  }
+  .qa .a { color: var(--text-primary); margin: 0.35rem 0; }
+  .qa .gotcha {
+    font-size: 0.9rem;
+    background: rgba(255,255,255,0.6);
+    border-left: 3px solid var(--interview-border);
+    padding: 0.5rem 0.85rem;
+    border-radius: 0 6px 6px 0;
+    margin-top: 0.4rem;
+  }
+  .qa .gotcha strong { color: #15803d; }
+
+  .cell-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: #9ca3af;
+    margin: 1.5rem 0 -0.25rem;
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header class="page-head">
+    <h1>Local Offline RAG with Ollama</h1>
+    <p class="subtitle">A fully offline RAG pipeline — PDF loading, chunking, local Ollama embeddings, ChromaDB vector search, and an LCEL chain powered by a local LLM.</p>
+  </header>
+
+  <!-- ================= TABLE OF CONTENTS ================= -->
+  <nav class="toc">
+    <details open>
+      <summary>Table of Contents</summary>
+      <ol>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#sec-1">1. Prerequisites &amp; Installation</a></li>
+        <li><a href="#sec-2">2. Import Required Libraries</a></li>
+        <li><a href="#sec-3">3. Verify Ollama Installation</a></li>
+        <li><a href="#sec-4">4. Load PDF Documents</a></li>
+        <li><a href="#sec-5">5. Split Documents into Chunks</a></li>
+        <li><a href="#sec-6">6. Create Embeddings (Nomic-Embed-Text)</a></li>
+        <li><a href="#sec-7">7. Alternative: EmbeddingGemma</a></li>
+        <li><a href="#sec-8">8. Create ChromaDB Vector Store</a></li>
+        <li><a href="#sec-9">9. Create Retriever and Test</a></li>
+        <li><a href="#sec-10">10. Configure Ollama LLM (Gemma3:1b)</a></li>
+        <li><a href="#sec-11">11. Build RAG Chain (LCEL)</a></li>
+        <li><a href="#sec-12">12. Test RAG Pipeline</a></li>
+        <li><a href="#sec-13">13. Interactive Q&amp;A Session</a></li>
+        <li><a href="#sec-14">14. Bonus: Compare Embedding Models</a></li>
+        <li><a href="#sec-15">15. Performance Tips &amp; Next Steps</a></li>
+        <li><a href="#recap">Quick Recap</a></li>
+        <li><a href="#interview">Interview Prep</a></li>
+      </ol>
+    </details>
+  </nav>
+
+  <!-- ================= NOTEBOOK CONTENT ================= -->
+
+  <!-- cell-0 -->
+  <span class="cell-tag">markdown · cell-0</span>
+  <div class="md" id="overview">
+    <h1>Local Offline RAG with Ollama</h1>
+    <h2>Overview</h2>
+    <p>This notebook demonstrates building a <strong>completely offline RAG (Retrieval-Augmented Generation)</strong> system using <strong>Ollama</strong> for local LLMs and embeddings.</p>
+    <h3>🚀 Benefits of Local RAG:</h3>
+    <ul>
+      <li><strong>100% Offline</strong>: No internet required after setup</li>
+      <li><strong>Privacy First</strong>: Your documents never leave your machine</li>
+      <li><strong>No API Costs</strong>: Free to run unlimited queries</li>
+      <li><strong>Fast</strong>: No network latency</li>
+      <li><strong>Full Control</strong>: Customize models and parameters</li>
+    </ul>
+    <h3>📋 Architecture:</h3>
+    <pre class="diagram">PDF Documents → Load → Split → Local Embeddings (Ollama) → ChromaDB
+                                                                  ↓
+User Query → Retrieve Similar Chunks → Local LLM (Ollama) → Answer</pre>
+    <h3>🛠️ Components:</h3>
+    <ul>
+      <li><strong>Document Loader</strong>: PyPDFLoader</li>
+      <li><strong>Text Splitter</strong>: RecursiveCharacterTextSplitter</li>
+      <li><strong>Embeddings</strong>: Ollama with nomic-embed-text (or embeddinggemma)</li>
+      <li><strong>Vector Store</strong>: ChromaDB (persistent, local)</li>
+      <li><strong>LLM</strong>: Ollama with gemma3:1b</li>
+      <li><strong>Chain</strong>: LangChain Expression Language (LCEL)</li>
+    </ul>
+    <hr>
+  </div>
+
+  <!-- cell-1 -->
+  <span class="cell-tag">markdown · cell-1</span>
+  <div class="md" id="sec-1">
+    <h2>1. Prerequisites &amp; Installation</h2>
+    <h3>Required Software:</h3>
+    <ol>
+      <li><strong>Ollama</strong>: Download from <a href="https://ollama.ai">https://ollama.ai</a></li>
+      <li><strong>Python 3.9+</strong>: Recommended 3.11 or 3.13</li>
+    </ol>
+    <h3>Install Python Packages:</h3>
+  </div>
+
+  <!-- cell-2 -->
+  <span class="cell-tag">code · cell-2</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Install required packages (run this once)</span>
+<span class="cmt"># !pip install langchain langchain-core langchain-community langchain-text-splitters</span>
+<span class="cmt"># !pip install langchain-ollama langchain-chroma chromadb</span>
+<span class="cmt"># !pip install pypdf tiktoken</span>
+
+<span class="cmt"># Or install from requirements.txt with additional packages:</span>
+<span class="cmt"># !pip install -r requirements.txt</span>
+<span class="cmt"># !pip install langchain-ollama langchain-chroma chromadb</span></code></pre>
+  </div>
+
+  <!-- cell-3 -->
+  <span class="cell-tag">markdown · cell-3</span>
+  <div class="md">
+    <h3>Download Ollama Models:</h3>
+    <p>Run these commands in your terminal (if you haven't already):</p>
+    <pre class="diagram"><span class="cmt"># Embedding model (choose one or both)</span>
+ollama pull nomic-embed-text    <span class="cmt"># Recommended: 274 MB</span>
+ollama pull embeddinggemma      <span class="cmt"># Alternative: 621 MB</span>
+
+<span class="cmt"># LLM for generation</span>
+ollama pull gemma3:1b          <span class="cmt"># Small &amp; fast: 815 MB</span></pre>
+    <p><strong>Note</strong>: You already have these models downloaded! ✓</p>
+  </div>
+
+  <!-- cell-4 -->
+  <span class="cell-tag">markdown · cell-4</span>
+  <div class="md" id="sec-2">
+    <h2>2. Import Required Libraries</h2>
+  </div>
+
+  <!-- cell-5 -->
+  <span class="cell-tag">code · cell-5</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Standard library imports</span>
+import os
+import sys
+from pathlib import Path
+
+<span class="cmt"># LangChain Document Loaders</span>
+from langchain_community.document_loaders import PyPDFLoader
+
+<span class="cmt"># LangChain Text Splitters</span>
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+<span class="cmt"># Ollama Integration</span>
+from langchain_ollama import OllamaEmbeddings, ChatOllama
+
+<span class="cmt"># ChromaDB Vector Store</span>
+from langchain_chroma import Chroma
+
+<span class="cmt"># LangChain Core Components</span>
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
+
+print("✓ All imports successful!")
+print("✓ Ready for local offline RAG!")
+print(f"\nPython version: {sys.version}")</code></pre>
+  </div>
+
+  <!-- cell-6 -->
+  <span class="cell-tag">markdown · cell-6</span>
+  <div class="md" id="sec-3">
+    <h2>3. Verify Ollama Installation</h2>
+    <p>Let's check that Ollama is running and our models are available.</p>
+  </div>
+
+  <!-- cell-7 -->
+  <span class="cell-tag">code · cell-7</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Check Ollama is running and list available models</span>
+!ollama list</code></pre>
+  </div>
+
+  <!-- cell-8 -->
+  <span class="cell-tag">code · cell-8</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Test Ollama connection with a simple query</span>
+print("Testing Ollama connection...\n")
+
+try:
+    test_llm = ChatOllama(model="gemma3:270m", temperature=0)
+    response = test_llm.invoke("Say 'Hello! I am running locally on your machine!'")
+
+    print("✓ Ollama is working!")
+    print(f"Response: {response.content}")
+
+except Exception as e:
+    print(f"✗ Error connecting to Ollama: {e}")
+    print("\nMake sure Ollama is running. Try: ollama serve")</code></pre>
+  </div>
+
+  <!-- cell-9 -->
+  <span class="cell-tag">markdown · cell-9</span>
+  <div class="md" id="sec-4">
+    <h2>4. Load PDF Documents</h2>
+    <p>Load your PDF documents for the RAG system.</p>
+  </div>
+
+  <!-- cell-10 -->
+  <span class="cell-tag">code · cell-10</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># ===== CONFIGURATION: Update this path to your PDF file =====</span>
+pdf_path = "attention.pdf"  <span class="cmt"># Change this to your PDF file path</span>
+<span class="cmt"># =============================================================</span>
+
+<span class="cmt"># Check if file exists</span>
+if not os.path.exists(pdf_path):
+    print(f"⚠️  ERROR: File '{pdf_path}' not found!")
+    print("Please update the pdf_path variable with your PDF file location.")
+else:
+    <span class="cmt"># Load the PDF</span>
+    loader = PyPDFLoader(pdf_path)
+    documents = loader.load()
+
+    <span class="cmt"># Display information</span>
+    print(f"✓ Loaded {len(documents)} pages from '{pdf_path}'")
+    print(f"\n--- First Page Preview ---")
+    print(f"Content (first 300 chars): {documents[0].page_content[:300]}...")
+    print(f"\nMetadata: {documents[0].metadata}")
+    print(f"\nTotal characters: {sum(len(doc.page_content) for doc in documents):,}")</code></pre>
+  </div>
+
+  <!-- cell-11 -->
+  <span class="cell-tag">markdown · cell-11</span>
+  <div class="md">
+    <h3>Optional: Load Multiple PDFs from a Directory</h3>
+  </div>
+
+  <!-- cell-12 -->
+  <span class="cell-tag">code · cell-12</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Uncomment to load multiple PDFs from a directory</span>
+
+<span class="cmt"># pdf_directory = "./pdfs"</span>
+<span class="cmt"># all_documents = []</span>
+
+<span class="cmt"># if os.path.exists(pdf_directory):</span>
+<span class="cmt">#     pdf_files = list(Path(pdf_directory).glob("*.pdf"))</span>
+<span class="cmt">#     print(f"Found {len(pdf_files)} PDF files\n")</span>
+
+<span class="cmt">#     for pdf_file in pdf_files:</span>
+<span class="cmt">#         loader = PyPDFLoader(str(pdf_file))</span>
+<span class="cmt">#         docs = loader.load()</span>
+<span class="cmt">#         all_documents.extend(docs)</span>
+<span class="cmt">#         print(f"  ✓ Loaded {len(docs)} pages from {pdf_file.name}")</span>
+
+<span class="cmt">#     print(f"\nTotal pages loaded: {len(all_documents)}")</span>
+<span class="cmt">#     documents = all_documents  # Use this for the rest of the pipeline</span></code></pre>
+  </div>
+
+  <!-- cell-13 -->
+  <span class="cell-tag">markdown · cell-13</span>
+  <div class="md" id="sec-5">
+    <h2>5. Split Documents into Chunks</h2>
+    <p>Break documents into smaller chunks for better retrieval precision.</p>
+  </div>
+
+  <!-- cell-14 -->
+  <span class="cell-tag">code · cell-14</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Initialize text splitter</span>
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=1024,        <span class="cmt"># Characters per chunk</span>
+    chunk_overlap=128,      <span class="cmt"># Overlap to maintain context</span>
+    length_function=len,
+    separators=["\n\n", "\n", " ", ""]  <span class="cmt"># Split on paragraphs, then lines, etc.</span>
+)
+
+<span class="cmt"># Split documents</span>
+chunks = text_splitter.split_documents(documents)
+
+<span class="cmt"># Display results</span>
+avg_chunk_size = sum(len(chunk.page_content) for chunk in chunks) / len(chunks)
+
+print(f"✓ Split {len(documents)} documents into {len(chunks)} chunks")
+print(f"\nAverage chunk size: {avg_chunk_size:.0f} characters")
+
+<span class="cmt"># Preview chunks</span>
+print(f"\n--- Chunk Examples ---")
+for i, chunk in enumerate(chunks[:3]):
+    print(f"\nChunk {i+1} (length: {len(chunk.page_content)} chars):")
+    print(f"{chunk.page_content[:200]}...")</code></pre>
+  </div>
+
+  <!-- cell-15 -->
+  <span class="cell-tag">markdown · cell-15</span>
+  <div class="md" id="sec-6">
+    <h2>6. Create Embeddings (Primary: Nomic-Embed-Text)</h2>
+    <h3>About Nomic-Embed-Text:</h3>
+    <ul>
+      <li><strong>Size</strong>: 274 MB</li>
+      <li><strong>Dimensions</strong>: 768</li>
+      <li><strong>Performance</strong>: State-of-the-art for local embeddings</li>
+      <li><strong>Speed</strong>: Fast inference</li>
+      <li><strong>License</strong>: Open source (Apache 2.0)</li>
+    </ul>
+  </div>
+
+  <!-- cell-16 -->
+  <span class="cell-tag">code · cell-16</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Initialize Ollama Embeddings with nomic-embed-text</span>
+embeddings = OllamaEmbeddings(
+    model="nomic-embed-text:latest",
+    <span class="cmt"># base_url="http://localhost:11434"  # Default Ollama URL</span>
+)
+
+<span class="cmt"># Test embeddings</span>
+print("Testing nomic-embed-text embeddings...\n")
+sample_text = "This is a test sentence for embeddings."
+sample_embedding = embeddings.embed_query(sample_text)
+
+print(f"✓ Embeddings model: nomic-embed-text")
+print(f"✓ Embedding dimension: {len(sample_embedding)}")
+print(f"✓ Sample embedding (first 10 values): {sample_embedding[:10]}")
+print(f"\nℹ️  Each chunk will be converted to a {len(sample_embedding)}-dimensional vector")
+print(f"ℹ️  All processing happens locally on your machine!")</code></pre>
+  </div>
+
+  <!-- cell-17 -->
+  <span class="cell-tag">markdown · cell-17</span>
+  <div class="md" id="sec-7">
+    <h2>7. Alternative: EmbeddingGemma (Optional)</h2>
+    <h3>About EmbeddingGemma:</h3>
+    <ul>
+      <li><strong>Size</strong>: 621 MB (larger than nomic)</li>
+      <li><strong>Dimensions</strong>: 768</li>
+      <li><strong>Optimized for</strong>: Google Gemma models</li>
+      <li><strong>Use case</strong>: Better alignment with Gemma LLMs</li>
+    </ul>
+    <p><strong>Uncomment the code below to use embeddinggemma instead:</strong></p>
+  </div>
+
+  <!-- cell-18 -->
+  <span class="cell-tag">code · cell-18</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># # Alternative: Use embeddinggemma instead</span>
+<span class="cmt"># embeddings = OllamaEmbeddings(</span>
+<span class="cmt">#     model="embeddinggemma:latest"</span>
+<span class="cmt"># )</span>
+
+<span class="cmt"># # Test embeddings</span>
+<span class="cmt"># print("Testing embeddinggemma embeddings...\n")</span>
+<span class="cmt"># sample_text = "This is a test sentence for embeddings."</span>
+<span class="cmt"># sample_embedding = embeddings.embed_query(sample_text)</span>
+
+<span class="cmt"># print(f"✓ Embeddings model: embeddinggemma")</span>
+<span class="cmt"># print(f"✓ Embedding dimension: {len(sample_embedding)}")</span>
+<span class="cmt"># print(f"✓ Sample embedding (first 10 values): {sample_embedding[:10]}")</span></code></pre>
+  </div>
+
+  <!-- cell-19 -->
+  <span class="cell-tag">markdown · cell-19</span>
+  <div class="md" id="sec-8">
+    <h2>8. Create ChromaDB Vector Store</h2>
+    <h3>Why ChromaDB?</h3>
+    <ul>
+      <li><strong>Local &amp; Persistent</strong>: Stores vectors on disk</li>
+      <li><strong>Python 3.13 Compatible</strong>: Works with latest Python</li>
+      <li><strong>Easy to Use</strong>: Simple API</li>
+      <li><strong>Open Source</strong>: Free and fully featured</li>
+    </ul>
+    <p><strong>Note</strong>: This step may take a minute as it processes all chunks.</p>
+  </div>
+
+  <!-- cell-20 -->
+  <span class="cell-tag">code · cell-20</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Create ChromaDB vector store</span>
+print(f"Creating ChromaDB vector store from {len(chunks)} chunks...")
+print("This may take a minute...\n")
+
+<span class="cmt"># Set persistent directory</span>
+persist_directory = "./chroma_db"
+
+<span class="cmt"># Create vector store</span>
+vectorstore = Chroma.from_documents(
+    documents=chunks,
+    embedding=embeddings,
+    persist_directory=persist_directory,
+    collection_name="local_rag_collection"
+)
+
+print(f"✓ ChromaDB vector store created successfully!")
+print(f"✓ Indexed {len(chunks)} document chunks")
+print(f"✓ Stored at: {persist_directory}")
+print(f"\nℹ️  Vector store persisted to disk - you can reload it later!")</code></pre>
+  </div>
+
+  <!-- cell-21 -->
+  <span class="cell-tag">markdown · cell-21</span>
+  <div class="md">
+    <h3>Load Existing Vector Store (Optional)</h3>
+    <p>If you've already created the vector store, you can load it instead:</p>
+  </div>
+
+  <!-- cell-22 -->
+  <span class="cell-tag">code · cell-22</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># # Uncomment to load existing vector store</span>
+<span class="cmt"># persist_directory = "./chroma_db"</span>
+
+<span class="cmt"># vectorstore = Chroma(</span>
+<span class="cmt">#     persist_directory=persist_directory,</span>
+<span class="cmt">#     embedding_function=embeddings,</span>
+<span class="cmt">#     collection_name="local_rag_collection"</span>
+<span class="cmt"># )</span>
+
+<span class="cmt"># print(f"✓ Loaded existing vector store from '{persist_directory}'")</span>
+<span class="cmt"># print(f"✓ Collection: local_rag_collection")</span></code></pre>
+  </div>
+
+  <!-- cell-23 -->
+  <span class="cell-tag">markdown · cell-23</span>
+  <div class="md" id="sec-9">
+    <h2>9. Create Retriever and Test</h2>
+    <p>The retriever finds the most relevant chunks for a given query.</p>
+  </div>
+
+  <!-- cell-24 -->
+  <span class="cell-tag">code · cell-24</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Create retriever</span>
+retriever = vectorstore.as_retriever(
+    search_type="similarity",    <span class="cmt"># Use cosine similarity</span>
+    search_kwargs={"k": 4}        <span class="cmt"># Retrieve top 4 most relevant chunks</span>
+)
+
+print("✓ Retriever configured successfully")
+print(f"  - Search type: similarity")
+print(f"  - Number of documents to retrieve (k): 4")
+
+<span class="cmt"># Test retrieval</span>
+test_query = "What is the main topic of this document?"
+print(f"\n--- Retriever Test ---")
+print(f"Query: '{test_query}'")
+
+retrieved_docs = retriever.invoke(test_query)
+
+print(f"\nRetrieved {len(retrieved_docs)} documents:")
+for i, doc in enumerate(retrieved_docs):
+    print(f"\nDocument {i+1}:")
+    print(f"  Content preview: {doc.page_content[:150]}...")
+    print(f"  Source: Page {doc.metadata.get('page', 'N/A')}")</code></pre>
+  </div>
+
+  <!-- cell-25 -->
+  <span class="cell-tag">markdown · cell-25</span>
+  <div class="md" id="sec-10">
+    <h2>10. Configure Ollama LLM (Gemma3:1b)</h2>
+    <h3>About Gemma3:1b:</h3>
+    <ul>
+      <li><strong>Size</strong>: 815 MB</li>
+      <li><strong>Parameters</strong>: 1 billion</li>
+      <li><strong>Speed</strong>: Very fast inference</li>
+      <li><strong>Quality</strong>: Good for most Q&amp;A tasks</li>
+      <li><strong>Memory</strong>: Low RAM usage</li>
+    </ul>
+    <p><strong>Alternatives</strong>: You can also use llama3.2 (2GB) or deepseek-r1 (4.7GB) for better quality.</p>
+  </div>
+
+  <!-- cell-26 -->
+  <span class="cell-tag">code · cell-26</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Initialize Ollama LLM</span>
+llm = ChatOllama(
+    model="gemma3:270m",
+    temperature=0,          <span class="cmt"># Deterministic responses (0 = focused, 1 = creative)</span>
+    <span class="cmt"># num_predict=2000,     # Max tokens to generate</span>
+    <span class="cmt"># top_k=40,             # Top-k sampling</span>
+    <span class="cmt"># top_p=0.9,            # Top-p (nucleus) sampling</span>
+)
+
+print("✓ LLM configured successfully")
+print(f"  - Model: gemma3:1b (local)")
+print(f"  - Temperature: 0 (deterministic)")
+
+<span class="cmt"># Test LLM</span>
+test_response = llm.invoke("Say 'Hello! I am Gemma running locally!'")
+print(f"\nLLM Test Response: {test_response.content}")</code></pre>
+  </div>
+
+  <!-- cell-27 -->
+  <span class="cell-tag">markdown · cell-27</span>
+  <div class="md">
+    <h3>Try Other Local Models (Optional)</h3>
+  </div>
+
+  <!-- cell-28 -->
+  <span class="cell-tag">code · cell-28</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># # Alternative: Use llama3.2 for better quality</span>
+<span class="cmt"># llm = ChatOllama(</span>
+<span class="cmt">#     model="llama3.2:latest",</span>
+<span class="cmt">#     temperature=0</span>
+<span class="cmt"># )</span>
+
+<span class="cmt"># # Alternative: Use deepseek-r1 for reasoning tasks</span>
+<span class="cmt"># llm = ChatOllama(</span>
+<span class="cmt">#     model="deepseek-r1:latest",</span>
+<span class="cmt">#     temperature=0</span>
+<span class="cmt"># )</span></code></pre>
+  </div>
+
+  <!-- cell-29 -->
+  <span class="cell-tag">markdown · cell-29</span>
+  <div class="md" id="sec-11">
+    <h2>11. Build RAG Chain (LangChain Expression Language)</h2>
+    <p>Combine retrieval and generation into a single pipeline using LCEL.</p>
+  </div>
+
+  <!-- cell-30 -->
+  <span class="cell-tag">code · cell-30</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Define prompt template</span>
+system_prompt = (
+    "You are a helpful assistant for question-answering tasks. "
+    "Use the following pieces of retrieved context to answer the question. "
+    "If you don't know the answer based on the context, say that you don't know. "
+    "Keep the answer concise and accurate.\n\n"
+    "Context: {context}\n\n"
+    "Question: {question}"
+)
+
+prompt = ChatPromptTemplate.from_template(system_prompt)
+
+<span class="cmt"># Helper function to format documents</span>
+def format_docs(docs):
+    """Format retrieved documents into a single string."""
+    return "\n\n".join(doc.page_content for doc in docs)
+
+<span class="cmt"># Build RAG chain using LCEL</span>
+rag_chain = (
+    {
+        "context": retriever | format_docs,  <span class="cmt"># Retrieve and format docs</span>
+        "question": RunnablePassthrough()      <span class="cmt"># Pass through the question</span>
+    }
+    | prompt           <span class="cmt"># Format with prompt template</span>
+    | llm              <span class="cmt"># Generate answer with local LLM</span>
+    | StrOutputParser() <span class="cmt"># Parse output to string</span>
+)
+
+print("✓ RAG chain created successfully using LCEL!")
+print("\nRAG Pipeline Flow:")
+print("  1. User provides a query")
+print("  2. Retriever finds top 4 relevant chunks (local ChromaDB)")
+print("  3. Chunks are formatted as context")
+print("  4. Context + question formatted with prompt template")
+print("  5. Local LLM (gemma3:1b) generates answer")
+print("  6. Answer parsed and returned")
+print("\n🔒 Everything runs locally on your machine!")</code></pre>
+  </div>
+
+  <!-- cell-31 -->
+  <span class="cell-tag">markdown · cell-31</span>
+  <div class="md" id="sec-12">
+    <h2>12. Test RAG Pipeline with Example Queries</h2>
+    <p>Let's test our complete local RAG system!</p>
+  </div>
+
+  <!-- cell-32 -->
+  <span class="cell-tag">code · cell-32</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Example Query 1: General question</span>
+query1 = "What is summary of this document?"
+
+print(f"Query: {query1}")
+print("\nProcessing locally...\n")
+
+answer = rag_chain.invoke(query1)
+
+print("=" * 80)
+print("ANSWER:")
+print("=" * 80)
+print(answer)
+print("\n" + "=" * 80)
+
+<span class="cmt"># Show source documents</span>
+print("\nSOURCE DOCUMENTS USED:")
+print("=" * 80)
+retrieved_docs = retriever.invoke(query1)
+for i, doc in enumerate(retrieved_docs):
+    print(f"\nDocument {i+1}:")
+    print(f"  Page: {doc.metadata.get('page', 'N/A')}")
+    print(f"  Content: {doc.page_content[:200]}...")
+    print("-" * 80)</code></pre>
+  </div>
+
+  <!-- cell-33 -->
+  <span class="cell-tag">code · cell-33</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Example Query 2: Specific information extraction</span>
+query2 = "Can you summarize the key technical contributions or innovations mentioned?"
+
+print(f"Query: {query2}")
+print("\nProcessing locally...\n")
+
+answer = rag_chain.invoke(query2)
+
+print("=" * 80)
+print("ANSWER:")
+print("=" * 80)
+print(answer)
+print("\n" + "=" * 80)</code></pre>
+  </div>
+
+  <!-- cell-34 -->
+  <span class="cell-tag">code · cell-34</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Example Query 3: Your custom question</span>
+custom_query = "What specific details are mentioned about the methodology or approach?"
+
+print(f"Query: {custom_query}")
+print("\nProcessing locally...\n")
+
+answer = rag_chain.invoke(custom_query)
+
+print("=" * 80)
+print("ANSWER:")
+print("=" * 80)
+print(answer)
+print("\n" + "=" * 80)</code></pre>
+  </div>
+
+  <!-- cell-35 -->
+  <span class="cell-tag">markdown · cell-35</span>
+  <div class="md" id="sec-13">
+    <h2>13. Interactive Q&amp;A Session</h2>
+    <p>Ask your own questions to the RAG system!</p>
+  </div>
+
+  <!-- cell-36 -->
+  <span class="cell-tag">code · cell-36</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># Interactive Q&amp;A</span>
+def ask_question(question):
+    """Ask a question to the RAG system."""
+    print(f"\n{'='*80}")
+    print(f"Question: {question}")
+    print(f"{'='*80}")
+
+    answer = rag_chain.invoke(question)
+
+    print(f"\nAnswer: {answer}")
+    print(f"{'='*80}\n")
+
+    return answer
+
+<span class="cmt"># Try it out!</span>
+<span class="cmt"># Change the question below to ask anything about your document</span>
+my_question = "What are the main findings or results?"
+ask_question(my_question)</code></pre>
+  </div>
+
+  <!-- cell-37 -->
+  <span class="cell-tag">markdown · cell-37</span>
+  <div class="md" id="sec-14">
+    <h2>14. Bonus: Compare Embedding Models (Optional)</h2>
+    <p>Compare retrieval results between nomic-embed-text and embeddinggemma.</p>
+  </div>
+
+  <!-- cell-38 -->
+  <span class="cell-tag">code · cell-38</span>
+  <div class="code-wrap">
+    <span class="lang-label">Python</span>
+    <pre class="code"><code><span class="cmt"># # Uncomment to compare embedding models</span>
+
+<span class="cmt"># print("Comparing embedding models...\n")</span>
+
+<span class="cmt"># test_query = "What is attention mechanism?"</span>
+
+<span class="cmt"># # Test with nomic-embed-text</span>
+<span class="cmt"># print("=" * 80)</span>
+<span class="cmt"># print("Using nomic-embed-text:")</span>
+<span class="cmt"># print("=" * 80)</span>
+<span class="cmt"># embeddings_nomic = OllamaEmbeddings(model="nomic-embed-text")</span>
+<span class="cmt"># vectorstore_nomic = Chroma.from_documents(</span>
+<span class="cmt">#     documents=chunks[:10],  # Use first 10 chunks for quick test</span>
+<span class="cmt">#     embedding=embeddings_nomic,</span>
+<span class="cmt">#     collection_name="test_nomic"</span>
+<span class="cmt"># )</span>
+<span class="cmt"># retriever_nomic = vectorstore_nomic.as_retriever(search_kwargs={"k": 2})</span>
+<span class="cmt"># docs_nomic = retriever_nomic.invoke(test_query)</span>
+
+<span class="cmt"># print(f"\nTop retrieved document:")</span>
+<span class="cmt"># print(f"{docs_nomic[0].page_content[:200]}...\n")</span>
+
+<span class="cmt"># # Test with embeddinggemma</span>
+<span class="cmt"># print("=" * 80)</span>
+<span class="cmt"># print("Using embeddinggemma:")</span>
+<span class="cmt"># print("=" * 80)</span>
+<span class="cmt"># embeddings_gemma = OllamaEmbeddings(model="embeddinggemma:latest")</span>
+<span class="cmt"># vectorstore_gemma = Chroma.from_documents(</span>
+<span class="cmt">#     documents=chunks[:10],</span>
+<span class="cmt">#     embedding=embeddings_gemma,</span>
+<span class="cmt">#     collection_name="test_gemma"</span>
+<span class="cmt"># )</span>
+<span class="cmt"># retriever_gemma = vectorstore_gemma.as_retriever(search_kwargs={"k": 2})</span>
+<span class="cmt"># docs_gemma = retriever_gemma.invoke(test_query)</span>
+
+<span class="cmt"># print(f"\nTop retrieved document:")</span>
+<span class="cmt"># print(f"{docs_gemma[0].page_content[:200]}...\n")</span>
+
+<span class="cmt"># print("=" * 80)</span>
+<span class="cmt"># print("\nℹ️  Both models perform well. Choose based on your preference!")</span>
+<span class="cmt"># print("   - nomic-embed-text: Smaller (274MB), general-purpose")</span>
+<span class="cmt"># print("   - embeddinggemma: Larger (621MB), optimized for Gemma models")</span></code></pre>
+  </div>
+
+  <!-- cell-39 -->
+  <span class="cell-tag">markdown · cell-39</span>
+  <div class="md" id="sec-15">
+    <h2>15. Performance Tips &amp; Next Steps</h2>
+    <h3>🚀 Performance Optimization:</h3>
+    <ol>
+      <li><strong>Chunk Size</strong>: Experiment with different sizes (512, 1024, 2048)</li>
+      <li><strong>Retrieval Count (k)</strong>: Try k=3, 4, 5, 6 based on your needs</li>
+      <li><strong>Model Selection</strong>:
+        <ul>
+          <li>Fast: gemma3:1b</li>
+          <li>Balanced: llama3.2</li>
+          <li>Best quality: deepseek-r1</li>
+        </ul>
+      </li>
+      <li><strong>Temperature</strong>: 0 for factual, 0.3-0.7 for creative</li>
+    </ol>
+    <h3>💾 Persistence:</h3>
+    <ul>
+      <li>Vector store is saved at <code>./chroma_db</code></li>
+      <li>You can reload it without re-embedding documents</li>
+      <li>Delete the directory to start fresh</li>
+    </ul>
+    <h3>🔧 Troubleshooting:</h3>
+    <ul>
+      <li><strong>Slow responses</strong>: Use smaller model (gemma3:1b)</li>
+      <li><strong>Out of memory</strong>: Reduce chunk count or use smaller model</li>
+      <li><strong>Ollama not found</strong>: Make sure <code>ollama serve</code> is running</li>
+    </ul>
+    <h3>📚 Next Steps:</h3>
+    <ol>
+      <li>Try different documents and PDFs</li>
+      <li>Experiment with other Ollama models</li>
+      <li>Add custom preprocessing or post-processing</li>
+      <li>Build a simple UI with Gradio or Streamlit</li>
+      <li>Compare with cloud-based RAG (OpenAI, etc.)</li>
+    </ol>
+    <h3>🎉 Congratulations!</h3>
+    <p>You now have a fully functional <strong>local, offline RAG system</strong> running on your machine!</p>
+    <hr>
+    <p><strong>Created with LangChain + Ollama + ChromaDB</strong></p>
+  </div>
+
+  <!-- ================= QUICK RECAP ================= -->
+  <section class="recap" id="recap">
+    <h2>Quick Recap</h2>
+    <ul>
+      <li><strong>Local-first RAG</strong>: The entire pipeline — embeddings, vector store, and generation — runs on-device via Ollama, so no data leaves the machine and there are no per-query API costs after the models are pulled.</li>
+      <li><strong>Ingestion flow</strong>: <code>PyPDFLoader</code> loads the PDF page-by-page, then <code>RecursiveCharacterTextSplitter</code> breaks it into chunks of ~1024 chars with 128-char overlap to preserve context across boundaries.</li>
+      <li><strong>Embeddings</strong>: <code>nomic-embed-text</code> (274 MB) converts each chunk into a 768-dimensional vector locally; <code>embeddinggemma</code> is a drop-in alternative optimized for Gemma LLMs.</li>
+      <li><strong>Vector store</strong>: ChromaDB persists the embeddings to disk at <code>./chroma_db</code> under a named collection, so the index can be reloaded later without re-embedding.</li>
+      <li><strong>Retrieval</strong>: The retriever uses cosine similarity to fetch the top <code>k=4</code> most relevant chunks for a query, which become the grounding context.</li>
+      <li><strong>Generation</strong>: A local <code>ChatOllama</code> model with <code>temperature=0</code> produces deterministic answers; larger models (llama3.2, deepseek-r1) trade speed for quality.</li>
+      <li><strong>LCEL composition</strong>: The chain pipes a dict of <code>{context: retriever | format_docs, question: RunnablePassthrough()}</code> → prompt template → LLM → <code>StrOutputParser</code>, giving a clean, composable, single-call pipeline.</li>
+      <li><strong>Answer quality</strong>: Output is only as good as the retrieved context and the LLM — small local models limit generation quality even when retrieval is sound, so model choice and chunking both matter.</li>
+    </ul>
+  </section>
+
+  <!-- ================= INTERVIEW PREP ================= -->
+  <section class="interview" id="interview">
+    <h2>Interview Prep</h2>
+
+    <div class="qa">
+      <p class="q">1. Why would you build a fully local RAG system instead of using a cloud API?</p>
+      <p class="a">I'd choose local RAG when privacy, cost, or offline availability are priorities. Because embeddings, the vector store, and generation all run on-device via Ollama, sensitive documents never leave the machine, there are no per-token API charges, and there's no network latency or dependency. The trade-off is that local models are typically smaller and less capable than frontier cloud models, and you're responsible for your own hardware and scaling.</p>
+      <p class="gotcha"><strong>Gotcha:</strong> Interviewers may push on quality — the honest answer is that small local models can produce weaker or hallucinated answers, so local RAG is best when the retrieval context does most of the heavy lifting and the generation task is relatively simple.</p>
+    </div>
+
+    <div class="qa">
+      <p class="q">2. What does chunk size and chunk overlap control, and how do you tune them?</p>
+      <p class="a">Chunk size sets how much text each vector represents; overlap repeats characters across adjacent chunks so context isn't lost at boundaries. Smaller chunks give more precise retrieval but risk fragmenting ideas, while larger chunks preserve context but dilute the embedding and can retrieve irrelevant text. Here I used 1024 characters with 128 overlap as a balanced default, and I'd tune by evaluating retrieval quality on representative queries.</p>
+      <p class="gotcha"><strong>Gotcha:</strong> Overlap that's too large wastes storage and can return near-duplicate chunks; a good follow-up is to mention token-based splitting instead of character-based when the embedding model has a strict token limit.</p>
+    </div>
+
+    <div class="qa">
+      <p class="q">3. How does the retriever decide which chunks are relevant?</p>
+      <p class="a">The query is embedded into the same vector space as the chunks, and the retriever performs a similarity search — here cosine similarity — returning the top <code>k</code> nearest vectors. I set <code>k=4</code>, meaning the four closest chunks become the context passed to the LLM. The key assumption is that semantic closeness in embedding space corresponds to relevance to the question.</p>
+      <p class="gotcha"><strong>Gotcha:</strong> Pure similarity search can miss relevant chunks that are worded differently; a strong follow-up is mentioning hybrid search (dense + keyword/BM25) or re-ranking to improve recall and precision.</p>
+    </div>
+
+    <div class="qa">
+      <p class="q">4. Walk me through the LCEL chain in this notebook.</p>
+      <p class="a">The chain starts with a dictionary where <code>context</code> is <code>retriever | format_docs</code> (retrieve chunks then join them into one string) and <code>question</code> is <code>RunnablePassthrough()</code> which forwards the raw query unchanged. That dict feeds a <code>ChatPromptTemplate</code>, whose output goes to the <code>ChatOllama</code> LLM, and finally <code>StrOutputParser</code> converts the message object to a plain string. The pipe operator makes each stage composable and independently testable.</p>
+      <p class="gotcha"><strong>Gotcha:</strong> A common probe is why <code>RunnablePassthrough</code> is needed — it's because the retriever consumes the query for <code>context</code>, but the prompt template also needs the original question verbatim, so it must be forwarded in parallel.</p>
+    </div>
+
+    <div class="qa">
+      <p class="q">5. Why persist the vector store, and what does ChromaDB give you here?</p>
+      <p class="a">Embedding documents is the most expensive step, so persisting to disk means I can reload the index instantly instead of re-embedding on every run. ChromaDB provides a simple, local, persistent vector database that stores vectors under a named collection at a directory I specify. This makes the system restart-friendly and lets me separate the one-time ingestion step from repeated querying.</p>
+      <p class="gotcha"><strong>Gotcha:</strong> A subtle pitfall — if you change the embedding model, the persisted vectors are incompatible with new queries, so you must re-embed; interviewers like to see that you know the embedding model and the store are tightly coupled.</p>
+    </div>
+
+    <div class="qa">
+      <p class="q">6. What role does temperature play, and why set it to 0 for RAG?</p>
+      <p class="a">Temperature controls randomness in generation — lower values make the model more focused and deterministic, higher values more creative and varied. For RAG question-answering I set it to 0 because I want factual, reproducible answers grounded strictly in the retrieved context, not creative embellishment. If the task were brainstorming or drafting, I'd raise it to 0.3–0.7.</p>
+      <p class="gotcha"><strong>Gotcha:</strong> Temperature 0 reduces but does not eliminate hallucination — the model can still invent facts if the prompt doesn't strongly constrain it, which is why the system prompt explicitly tells it to say "I don't know" when the context lacks the answer.</p>
+    </div>
+
+    <div class="qa">
+      <p class="q">7. The prompt instructs the model to say "I don't know" if the answer isn't in the context. Why does this matter?</p>
+      <p class="a">Grounding instructions reduce hallucination by giving the model explicit permission to abstain rather than fabricate. In RAG, the whole point is that answers should be traceable to retrieved sources, so an "I don't know" is a correct and safe response when retrieval fails. It also makes failures debuggable — an empty or refused answer signals a retrieval problem rather than masking it with a confident wrong answer.</p>
+      <p class="gotcha"><strong>Gotcha:</strong> Small models often ignore such instructions or answer anyway; a good follow-up is to mention returning source documents alongside answers so users can verify grounding themselves, as this notebook does.</p>
+    </div>
+
+    <div class="qa">
+      <p class="q">8. How would you improve answer quality if this local RAG gave weak results?</p>
+      <p class="a">First I'd separate retrieval quality from generation quality: inspect the retrieved chunks to confirm the right context is being fetched, tuning chunk size, <code>k</code>, or adding re-ranking if not. If retrieval is good but answers are poor, I'd upgrade to a larger local model like llama3.2 or deepseek-r1, or refine the prompt. I'd also consider cleaning the source PDF extraction, since noisy chunks degrade both retrieval and generation.</p>
+      <p class="gotcha"><strong>Gotcha:</strong> The classic mistake is blaming the LLM first — the interviewer wants to hear that in RAG most quality problems originate in ingestion and retrieval, so you should diagnose those before swapping models.</p>
+    </div>
+
+  </section>
+
+</div>
+</body>
+</html>
