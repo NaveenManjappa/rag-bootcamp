@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notebook 02: Document Loaders</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-main: #fafafa;
+    --bg-card: #ffffff;
+    --text-primary: #1a1a1a;
+    --text-secondary: #555555;
+    --accent: #2563eb;
+    --accent-soft: #eff6ff;
+    --code-bg: #1e1e2e;
+    --code-text: #d4d4d4;
+    --code-border: #333349;
+    --border-light: #e5e7eb;
+    --recap-bg: #fff7ed;
+    --recap-border: #fdba74;
+    --interview-bg: #f0fdf4;
+    --interview-border: #86efac;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--bg-main);
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    line-height: 1.7;
+    font-size: 16px;
+  }
+
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 5rem;
+  }
+
+  /* Header */
+  header.hero {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 2.5rem 2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    border: 1px solid var(--border-light);
+    margin-bottom: 2rem;
+    border-top: 4px solid var(--accent);
+  }
+  header.hero h1 {
+    margin: 0 0 0.5rem;
+    font-size: 2.1rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  header.hero .subtitle {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 1.05rem;
+  }
+  header.hero .badge {
+    display: inline-block;
+    margin-top: 1rem;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+  }
+
+  /* TOC */
+  nav.toc {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  nav.toc summary {
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1.05rem;
+    outline: none;
+    list-style: none;
+  }
+  nav.toc summary::-webkit-details-marker { display: none; }
+  nav.toc summary::before {
+    content: "▸";
+    display: inline-block;
+    margin-right: 0.5rem;
+    color: var(--accent);
+    transition: transform 0.2s;
+  }
+  nav.toc[open] summary::before { transform: rotate(90deg); }
+  nav.toc ol {
+    margin: 1rem 0 0;
+    padding-left: 1.5rem;
+    columns: 2;
+    column-gap: 2rem;
+  }
+  nav.toc li { margin: 0.35rem 0; break-inside: avoid; }
+  nav.toc a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.95rem;
+  }
+  nav.toc a:hover { color: var(--accent); text-decoration: underline; }
+
+  /* Markdown cards */
+  .md {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    padding: 1.5rem 1.75rem;
+    margin: 1.25rem 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .md h1, .md h2, .md h3, .md h4 { line-height: 1.3; }
+  .md h1 { font-size: 1.8rem; font-weight: 800; margin: 0.2rem 0 1rem; }
+  .md h2 {
+    font-size: 1.45rem;
+    font-weight: 700;
+    margin: 0.2rem 0 1rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid var(--accent-soft);
+    border-left: 4px solid var(--accent);
+    padding-left: 0.75rem;
+  }
+  .md h3 { font-size: 1.2rem; font-weight: 700; margin: 1.4rem 0 0.6rem; color: var(--accent); }
+  .md h4 { font-size: 1.05rem; font-weight: 700; margin: 1.2rem 0 0.5rem; }
+  .md p { margin: 0.7rem 0; }
+  .md ul, .md ol { margin: 0.7rem 0; padding-left: 1.5rem; }
+  .md li { margin: 0.3rem 0; }
+  .md hr { border: none; border-top: 1px solid var(--border-light); margin: 1.5rem 0; }
+  .md a { color: var(--accent); }
+  .md strong { font-weight: 700; }
+
+  /* inline code */
+  .md code, p code, li code, td code {
+    background: #f3f4f6;
+    color: #b3125b;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.88em;
+    padding: 0.12em 0.4em;
+    border-radius: 4px;
+  }
+
+  /* Tables */
+  .md table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    font-size: 0.92rem;
+  }
+  .md th, .md td {
+    border: 1px solid var(--border-light);
+    padding: 0.55rem 0.75rem;
+    text-align: left;
+  }
+  .md th { background: var(--accent-soft); font-weight: 700; }
+  .md tr:nth-child(even) td { background: #fafafa; }
+
+  /* Code cells */
+  .code-cell {
+    position: relative;
+    margin: 1.25rem 0;
+    border-radius: 10px;
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-left: 4px solid var(--accent);
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+  .code-cell .lang {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: var(--code-border);
+    color: #a7a7c4;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    padding: 0.2rem 0.7rem;
+    border-bottom-left-radius: 8px;
+    text-transform: uppercase;
+  }
+  .code-cell pre {
+    margin: 0;
+    padding: 1.25rem 1.25rem 1.25rem;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.86rem;
+    line-height: 1.6;
+    color: var(--code-text);
+  }
+  .code-cell pre code {
+    background: none;
+    color: inherit;
+    padding: 0;
+    font-size: inherit;
+  }
+
+  /* code output */
+  .output {
+    background: #f5f5f7;
+    border: 1px solid var(--border-light);
+    border-left: 4px solid #9ca3af;
+    border-radius: 8px;
+    margin: -0.5rem 0 1.25rem;
+    padding: 1rem 1.25rem 1rem;
+    position: relative;
+  }
+  .output .out-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #6b7280;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+  .output pre {
+    margin: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    color: #374151;
+    overflow-x: auto;
+    white-space: pre-wrap;
+  }
+
+  /* Recap & Interview sections */
+  .callout {
+    border-radius: 12px;
+    padding: 1.75rem 2rem;
+    margin: 2rem 0;
+    border: 1px solid;
+  }
+  .callout h2 {
+    margin-top: 0;
+    font-size: 1.5rem;
+    font-weight: 800;
+  }
+  .recap {
+    background: var(--recap-bg);
+    border-color: var(--recap-border);
+  }
+  .recap h2 { color: #c2410c; }
+  .recap ul { padding-left: 1.3rem; }
+  .recap li { margin: 0.55rem 0; }
+
+  .interview {
+    background: var(--interview-bg);
+    border-color: var(--interview-border);
+  }
+  .interview h2 { color: #15803d; }
+  .qa { margin: 1.25rem 0; padding-bottom: 1.25rem; border-bottom: 1px dashed var(--interview-border); }
+  .qa:last-child { border-bottom: none; }
+  .qa .q { font-weight: 700; margin: 0 0 0.4rem; }
+  .qa .a { margin: 0 0 0.5rem; color: var(--text-primary); }
+  .qa .gotcha {
+    font-size: 0.9rem;
+    background: rgba(255,255,255,0.6);
+    border-left: 3px solid #15803d;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    color: var(--text-secondary);
+  }
+  .qa .gotcha strong { color: #15803d; }
+
+  @media (max-width: 640px) {
+    nav.toc ol { columns: 1; }
+    header.hero h1 { font-size: 1.6rem; }
+    .page { padding: 1.5rem 1rem 4rem; }
+    .md { padding: 1.25rem; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="hero">
+    <h1>📁 Notebook 02: Document Loaders</h1>
+    <p class="subtitle">Loading data from PDFs, CSVs, JSON, web pages, text, and directories into standardized LangChain Document objects.</p>
+    <span class="badge">LangChain 1.0.5+ · Mixed Level Class</span>
+  </header>
+
+  <!-- Table of Contents -->
+  <nav class="toc">
+    <details open>
+      <summary>📖 Table of Contents</summary>
+      <ol>
+        <li><a href="#why-loaders">Why Document Loaders?</a></li>
+        <li><a href="#document-structure">Document Object Structure</a></li>
+        <li><a href="#pdf-loading">Loading PDF Files</a></li>
+        <li><a href="#csv-loading">Loading CSV Files</a></li>
+        <li><a href="#json-loading">Loading JSON Files</a></li>
+        <li><a href="#html-loading">Loading Web Pages (HTML)</a></li>
+        <li><a href="#text-loading">Loading Text and Markdown Files</a></li>
+        <li><a href="#batch-loading">Batch Loading with DirectoryLoader</a></li>
+        <li><a href="#comparison">Loader Comparison Table</a></li>
+        <li><a href="#best-practices">Best Practices</a></li>
+        <li><a href="#summary">Summary &amp; Exercises</a></li>
+      </ol>
+    </details>
+  </nav>
+
+  <!-- cell-0 -->
+  <div class="md">
+    <h1>📁 Notebook 02: Document Loaders</h1>
+    <p><strong>LangChain 1.0.5+ | Mixed Level Class</strong></p>
+    <hr>
+    <h2>🎯 Learning Objectives</h2>
+    <p>By the end of this notebook, you will be able to:</p>
+    <ol>
+      <li>Load documents from <strong>PDF files</strong> using PyPDFLoader</li>
+      <li>Load structured data from <strong>CSV files</strong></li>
+      <li>Load JSON data from <strong>API responses</strong> or files</li>
+      <li>Scrape and load content from <strong>web pages</strong> (HTML)</li>
+      <li>Load <strong>text files</strong> and <strong>markdown files</strong></li>
+      <li><strong>Batch process</strong> multiple files using DirectoryLoader</li>
+      <li>Understand Document object structure</li>
+    </ol>
+    <hr>
+    <h2>📖 Table of Contents</h2>
+    <ol>
+      <li><a href="#why-loaders">Why Document Loaders?</a></li>
+      <li><a href="#document-structure">Document Object Structure</a></li>
+      <li><a href="#pdf-loading">Loading PDF Files</a></li>
+      <li><a href="#csv-loading">Loading CSV Files</a></li>
+      <li><a href="#json-loading">Loading JSON Files</a></li>
+      <li><a href="#html-loading">Loading Web Pages (HTML)</a></li>
+      <li><a href="#text-loading">Loading Text and Markdown Files</a></li>
+      <li><a href="#batch-loading">Batch Loading with DirectoryLoader</a></li>
+      <li><a href="#comparison">Comparison Table</a></li>
+      <li><a href="#best-practices">Best Practices</a></li>
+      <li><a href="#summary">Summary &amp; Exercises</a></li>
+    </ol>
+    <hr>
+  </div>
+
+  <!-- cell-1 -->
+  <div class="md" id="why-loaders">
+    <h2>1. Why Document Loaders? 🤔</h2>
+    <h3>🔰 BEGINNER</h3>
+    <p><strong>Document Loaders</strong> are tools that help you convert files (PDFs, CSVs, web pages, etc.) into <strong>Document objects</strong> that LangChain can work with.</p>
+    <p>Think of them as <strong>translators</strong>:</p>
+    <ul>
+      <li><strong>Input</strong>: Files in various formats (PDF, CSV, JSON, HTML)</li>
+      <li><strong>Output</strong>: Standardized Document objects with text content and metadata</li>
+    </ul>
+    <h3>Why is this important?</h3>
+    <p>Every RAG application needs to:</p>
+    <ol>
+      <li>📥 <strong>Load</strong> data from various sources</li>
+      <li>🔄 <strong>Convert</strong> it to a standard format</li>
+      <li>📊 <strong>Extract</strong> metadata (source, page number, etc.)</li>
+      <li>🎯 <strong>Prepare</strong> it for embedding and retrieval</li>
+    </ol>
+    <p>Document Loaders handle all of this automatically!</p>
+    <h3>🎓 INTERMEDIATE</h3>
+    <p>All document loaders in LangChain implement the same interface:</p>
+    <ul>
+      <li><code>.load()</code>: Load all documents at once (returns list[Document])</li>
+      <li><code>.lazy_load()</code>: Load documents one at a time (generator, memory efficient)</li>
+    </ul>
+    <p>This consistency makes it easy to switch between different data sources.</p>
+  </div>
+
+  <!-- cell-2 -->
+  <div class="code-cell">
+    <span class="lang">Python</span>
+    <pre><code># Setup: Import required libraries
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Verify setup
+print("✅ Environment loaded")
+print(f"Current directory: {os.getcwd()}")
+print(f"Sample data directory exists: {Path('sample_data').exists()}")</code></pre>
+  </div>
+
+  <!-- cell-3 -->
+  <div class="md" id="document-structure">
+    <h2>2. Document Object Structure 📄</h2>
+    <h3>🔰 BEGINNER</h3>
+    <p>Every Document has two main parts:</p>
+    <ol>
+      <li><strong>page_content</strong>: The actual text (string)</li>
+      <li><strong>metadata</strong>: Information about the document (dictionary)</li>
+    </ol>
+    <p>Think of it like a book:</p>
+    <ul>
+      <li><strong>page_content</strong> = The story</li>
+      <li><strong>metadata</strong> = The cover information (title, author, page number, etc.)</li>
+    </ul>
+  </div>
+
+  <!-- cell-4 -->
+  <div class="code-cell">
+    <span class="lang">Python</span>
+    <pre><code>from langchain_core.documents import Document
+
+# Create a sample document
+doc = Document(
+    page_content="This is the actual content of the document. It contains the text we want to process.",
+    metadata={
+        "source": "example.pdf",
+        "page": 1,
+        "author": "John Doe",
+        "date": "2025-01-15"
+    }
+)
+
+# Inspect the document
+print("📄 Document Structure:")
+print(f"\nType: {type(doc)}")
+print(f"\nContent (first 100 chars): {doc.page_content[:100]}...")
+print(f"\nMetadata: {doc.metadata}")
+print(f"\nSource: {doc.metadata['source']}")
+print(f"Page Number: {doc.metadata['page']}")</code></pre>
+  </div>
+
+  <!-- cell-5 -->
+  <div class="md" id="pdf-loading">
+    <h2>3. Loading PDF Files 📕</h2>
+    <h3>🔰 BEGINNER</h3>
+    <p><strong>PyPDFLoader</strong> is used to load PDF files. It:</p>
+    <ul>
+      <li>Extracts text from each page</li>
+      <li>Creates one Document per page</li>
+      <li>Automatically adds source and page number to metadata</li>
+    </ul>
+  </div>
+
+  <!-- cell-6 -->
+  <div class="md">
+    <h3>Example 1: Loading a Single PDF</h3>
+  </div>
+
+  <!-- cell-7 -->
+  <div class="code-cell">
+    <span class="lang">Python</span>
+    <pre><code>from langchain_community.document_loaders import PyPDFLoader
+
+# Load the "Attention is All You Need" paper (if it exists)
+pdf_path = "attention.pdf"
+
+if Path(pdf_path).exists():
+    print(f"Loading PDF: {pdf_path}")
+    print("⏳ This may take a moment...\n")
+
+    # Create loader
+    loader = PyPDFLoader(pdf_path)
+
+    # Load all pages
+    documents = loader.load()
+
+    print(f"✅ Loaded {len(documents)} pages\n")
+
+    # Inspect first page
+    print("📄 First Page:")
+    print(f"   Content (first 200 chars): {documents[0].page_content[:200]}...")
+    print(f"\n   Metadata: {documents[0].metadata}")
+
+    # Inspect last page
+    print(f"\n📄 Last Page (page {len(documents)}):")
+    print(f"   Content (first 200 chars): {documents[-1].page_content[:200]}...")
+
+else:
+    print(f"❌ PDF not found: {pdf_path}")
+    print("   Make sure the file exists in the project root")</code></pre>
+  </div>
+
+  <!-- cell-8 -->
+  <div class="md">
+    <h3>🎓 INTERMEDIATE: Lazy Loading for Large PDFs</h3>
+    <p>For very large PDFs, use <code>.lazy_load()</code> to process one page at a time:</p>
+  </div>
+
+  <!-- cell-9 -->
+  <div class="code-cell">
+    <span class="lang">Python</span>
+    <pre><code># Lazy loading example
+if Path(pdf_path).exists():
+    loader = PyPDFLoader(pdf_path)
+
+    print("🔄 Lazy loading pages (memory efficient):")
+
+    # Process first 3 pages only
+    for i, page in enumerate(loader.lazy_load()):
+        if i >= 3:  # Only process first 3 pages for demo
+            break
+
+        print(f"\nPage {i+1}:")
+        print(f"  Length: {len(page.page_content)} characters")
+        print(f"  Preview: {page.page_content[:100]}...")
+
+    print("\n💡 Tip: Use lazy_load() for PDFs > 100 pages to save memory")</code></pre>
+  </div>
+
+  <!-- cell-10 -->
+  <div class="md">
+    <h3>Example 2: Loading Multiple PDFs from a Directory</h3>
+  </div>
+
+  <!-- cell-11 -->
+  <div class="code-cell">
+    <span class="lang">Python</span>
+    <pre><code># Load all PDFs from the pdfs/ directory
+pdf_directory = "pdfs"
+
+if Path(pdf_directory).exists():
+    print(f"📂 Loading PDFs from: {pdf_directory}/\n")
+
+    all_documents = []
+
+    # Find all PDF files
+    pdf_files = list(Path(pdf_directory).glob("*.pdf"))
+    print(f"Found {len(pdf_files)} PDF files:")
+
+    for pdf_file in pdf_files:
+        print(f"  - {pdf_file.name}")
+
+        # Load each PDF
+        loader = PyPDFLoader(str(pdf_file))
+        docs = loader.load()
+        all_documents.extend(docs)
+
+        print(f"    ✅ Loaded {len(docs)} pages")
+
+    print(f"\n📊 Total: {len(all_documents)} pages from {len(pdf_files)} PDFs")
+
+    # Show unique sources
+    sources = set(doc.metadata['source'] for doc in all_documents)
+    print(f"\nSources:")
+    for source in sources:
+        print(f"  - {Path(source).name}")
+
+else:
+    print(f"❌ Directory not found: {pdf_directory}")</code></pre>
+  </div>
+
+  <!-- cell-12 -->
+  <div class="md" id="csv-loading">
+    <h2>4. Loading CSV Files 📊</h2>
+    <h3>🔰 BEGINNER</h3>
+    <p><strong>CSVLoader</strong> converts each row of a CSV file into a separate Document.</p>
+    <p><strong>Use cases:</strong></p>
+    <ul>
+      <li>Product catalogs</li>
+      <li>FAQ databases</li>
+      <li>Customer records</li>
+      <li>Any tabular data</li>
+    </ul>
+  </div>
+
+  <!-- cell-13 -->
+  <div class="code-cell">
+    <span class="lang">Python</span>
+    <pre><code>from langchain_community.document_loaders import CSVLoader
+
+# Load the products CSV
+csv_path = "sample_data/products.csv"
+
+if Path(csv_path).exists():
+    print(f"Loading CSV: {csv_path}\n")
+
+    # Create loader
+    loader = CSVLoader(
+        file_path=csv_path,
+        source_column="product_name"  # Which column to use as source in metadata
+    )
+
+    # Load all rows
+    documents = loader.load()
+
+    print(f"✅ Loaded {len(documents)} products\n")
+
+    # Inspect first 3 products
+    for i, doc in enumerate(documents[:3], 1):
+        print(f"{'='*70}")
+        print(f"Product {i}:")
+        print(f"{'='*70}")
+        print(doc.page_content)
+        print(f"\nSource: {doc.metadata['source']}")
+        print(f"Row: {doc.metadata.get('row', 'N/A')}")
+        print()
+
+    print(f"... and {len(documents) - 3} more products")
+
+else:
+    print(f"❌ CSV not found: {csv_path}")</code></pre>
+  </div>
+
+  <!-- cell-14 -->
+  <div class="md">
+    <h3>🎓 INTERMEDIATE: Custom CSV Configuration</h3>
+  </div>
+
+  <!-- cell-15 -->
+  <div class="code-cell">
+    <span class="lang">Python</span>
+    <pre><code>if Path(csv_path).exists():
+    # Advanced CSV loading with custom configuration
+    loader = CSVLoader(
+        file_path=csv_path,
+        csv_args={
+            'delimiter': ',',
+            'quotechar': '"',
+            'fieldnames': None,  # Use first row as headers
+        },
+        source_column="product_id"  # Use product_id as source
+    )
+
+    docs = loader.load()
+
+    # Show how metadata is different
+    print("📊 CSV with custom configuration:\n")
+    print(f"First document source: {docs[0].metadata['source']}")
+    print(f"Content preview:\n{docs[0].page_content[:200]}...")</code></pre>
+  </div>
+
+  <!-- cell-16 -->
+  <div class="md" id="json-loading">
+    <h2>5. Loading JSON Files 🔧</h2>
+    <h3>🔰 BEGINNER</h3>
+    <p><strong>JSONLoader</strong> extracts data from JSON files using <strong>jq</strong> syntax (a query language for JSON).</p>
+    <p><strong>Common use cases:</strong></p>
+    <ul>
+      <li>API responses</li>
+      <li>Configuration files</li>
+      <li>Structured data exports</li>
+    </ul>
+  </div>
+
+  <!-- cell-17 -->
+  <div class="code-cell">
+    <span class="lang">Python</span>
+    <pre><code>from langchain_community.document_loaders import JSONLoader
+
+# Load the API response JSON
+json_path = "sample_data/api_response.json"
+
+if Path(json_path).exists():
+    print(f"Loading JSON: {json_path}\n")
+
+    # Create loader
+    # jq_schema tells us where to find the content in the JSON
+    # .articles[] means: get all items from the 'articles' array
+    loader = JSONLoader(
+        file_path=json_path,
+        jq_schema=".articles[]",  # Extract each article
+        text_content=False  # Return full JSON for each article
+    )
+
+    # Load articles
+    documents = loader.load()
+
+    print(f"✅ Loaded {len(documents)} articles\n")
+
+    # Inspect first article
+    print("📰 First Article:")
+    print(f"Content:\n{documents[0].page_content}\n")
+    print(f"Metadata: {documents[0].metadata}")
+
+else:
+    print(f"❌ JSON not found: {json_path}")</code></pre>
+  </div>
+
+  <!-- cell-18 -->
+  <div class="code-cell">
+    <span class="lang">Shell</span>
+    <pre><code>!uv pip install jq</code></pre>
+  </div>
+
+  <!-- cell-19 -->
+  <div class="md">
+    <h3>🎓 INTERMEDIATE: Extracting Specific Fields from JSON</h3>
+  </div>
+
+  <!-- cell-20 -->
+  <div class="code-cell">
+    <span class="lang">Python</span>
+    <pre><code>if Path(json_path).exists():
+    # Extract only the article content field
+    loader = JSONLoader(
+        file_path=json_path,
+        jq_schema=".articles[].content",  # Get only 'content' field
+        text_content=True  # Treat as plain text
+    )
+
+    docs = loader.load()
+
+    print("📝 Extracted Article Contents Only:\n")
+    for i, doc in enumerate(docs[:2], 1):
+        print(f"{i}. {doc.page_content[:150]}...")
+        print()</code></pre>
+  </div>
+
+  <!-- cell-21 -->
+  <div class="md">
+    <h3>🔰 BEGINNER TIP: Understanding jq Syntax</h3>
+    <p><strong>jq</strong> is like a GPS for JSON:</p>
+    <table>
+      <thead>
+        <tr><th>jq Expression</th><th>Meaning</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>.</code></td><td>Root of JSON</td></tr>
+        <tr><td><code>.articles</code></td><td>Get the 'articles' field</td></tr>
+        <tr><td><code>.articles[]</code></td><td>Get all items in 'articles' array</td></tr>
+        <tr><td><code>.articles[0]</code></td><td>Get first item in 'articles' array</td></tr>
+        <tr><td><code>.articles[].title</code></td><td>Get 'title' from each article</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Example:</strong></p>
+    <div class="code-cell">
+      <span class="lang">JSON</span>
+      <pre><code>{
+  "articles": [
+    {"title": "Article 1", "content": "..."},
+    {"title": "Article 2", "content": "..."}
+  ]
+}</code></pre>
+    </div>
+    <ul>
+      <li><code>.articles[]</code> → Returns both articles</li>
+      <li><code>.articles[].title</code> → Returns ["Article 1", "Article 2"]</li>
+    </ul>
+  </div>
+
+  <!-- cell-22 -->
+  <div class="md" id="html-loading">
+    <h2>6. Loading Web Pages (HTML) 🌐</h2>
+    <h3>🔰 BEGINNER</h3>
+    <p><strong>WebBaseLoader</strong> scrapes web pages and extracts text content.</p>
+    <p><strong>Important:</strong> Only works with <strong>static HTML</strong>. For JavaScript-rendered sites, you'd need Playwright or Selenium.</p>
+    <h3>Example 1: Loading a Local HTML File</h3>
+  </div>
+
+  <!-- cell-23 -->
+  <div class="code-cell">
+    <span class="lang">Shell</span>
+    <pre><code>!uv pip install unstructured</code></pre>
+  </div>
+
+  <!-- cell-24 -->
+  <div class="code-cell">
+    <span class="lang">Python</span>
+    <pre><code>from langchain_community.document_loaders import UnstructuredHTMLLoader
+
+# Load our sample blog post
+html_path = "sample_data/blog_post.html"
+
+if Path(html_path).exists():
+    print(f"Loading HTML: {html_path}\n")
+
+    # For local files, we need to use file:// protocol
+    file_url = f"file://{Path(html_path).absolute()}"
+
+    # Create loader
+    loader = UnstructuredHTMLLoader(html_path)
+
+    # Load the page
+    documents = loader.load()
+
+    print(f"✅ Loaded {len(documents)} document(s)\n")
+
+    # Inspect content
+    doc = documents[0]
+    print(f"📄 Content length: {len(doc.page_content)} characters")
+    print(f"\n📝 First 500 characters:\n{doc.page_content[:500]}...")
+    print(f"\n🔍 Metadata: {doc.metadata}")
+
+else:
+    print(f"❌ HTML not found: {html_path}")</code></pre>
+  </div>
+
+  <!-- cell-25 -->
+  <div class="md">
+    <h3>🎓 INTERMEDIATE: Loading Multiple URLs</h3>
+  </div>
+
+  <!-- cell-26 -->
+  <div class="code-cell">
+    <span class="lang">Python</span>
+    <pre><code># Example: Load multiple web pages at once
+# NOTE: This will actually make HTTP requests, so we're using examples
+
+from langchain.document_loaders import WebBaseLoader
+
+#Uncomment to try with real websites:
+urls = [
+    "https://python.langchain.com/docs/introduction/",
+    "https://python.langchain.com/docs/expression_language/"
+]
+
+loader = WebBaseLoader(urls)
+docs = loader.load()
+
+print(f"Loaded {len(docs)} pages")
+for doc in docs:
+    print(f"  - {doc.metadata['source']}")
+
+print("💡 WebBaseLoader Example:")
+print("\nTo load web pages, use:")
+print("""loader = WebBaseLoader([
+    "https://example.com/page1",
+    "https://example.com/page2"
+])""")
+print("\n⚠️ Note: Only works with static HTML (no JavaScript rendering)")</code></pre>
+  </div>
+
+  <!-- cell-27 -->
+  <div class="code-cell">
+    <span class="lang">Python</span>
+    <pre><code># Print content from both loaded pages
+print("="*80)
+print("📄 LOADED DOCUMENTS CONTENT")
+print("="*80)
+
+for i, doc in enumerate(docs, 1):
+    print(f"\n{'='*80}")
+    print(f"📄 PAGE {i}: {doc.metadata['source']}")
+    print(f"{'='*80}")
+
+    # Print first 1000 characters of content
+    print(f"\n📝 Content Preview (first 1000 chars):")
+    print(doc.page_content[:1000])
+    print(f"\n... [Total length: {len(doc.page_content)} characters]")
+
+    # Print metadata
+    print(f"\n🔍 Metadata:")
+    for key, value in doc.metadata.items():
+        print(f"   {key}: {value}")
+
+    print("\n")
+
+# Full content of a specific page
+print("\n" + "="*80)
+print("📖 FULL CONTENT OF PAGE 1")
+print("="*80)
+print(docs[0].page_content)
+
+#  Or for a simpler version to just see the content:
+
+# Simple version - print both pages
+# for i, doc in enumerate(docs, 1):
+#     print(f"\n{'='*80}")
+#     print(f"PAGE {i}: {doc.metadata['source']}")
+#     print(f"{'='*80}\n")
+#     print(doc.page_content)
+#     print("\n")</code></pre>
+  </div>
+
+  <!-- cell-28 -->
+  <div class="md" id="text-loading">
+    <h2>7. Loading Text and Markdown Files 📝</h2>
+    <h3>🔰 BEGINNER</h3>
+    <p>For simple text files, use <strong>TextLoader</strong>.</p>
+  </div>
+
+  <!-- cell-29 -->
+  <div class="code-cell">
+    <span class="lang">Python</span>
+    <pre><code>from langchain_community.document_loaders import TextLoader
+
+# Load the notes.txt file
+txt_path = "sample_data/notes.txt"
+
+if Path(txt_path).exists():
+    print(f"Loading text file: {txt_path}\n")
+
+    # Create loader
+    loader = TextLoader(txt_path, encoding="utf-8")
+
+    # Load the file
+    documents = loader.load()
+
+    print(f"✅ Loaded {len(documents)} document\n")
+
+    doc = documents[0]
+    print(f"📄 Content length: {len(doc.page_content)} characters")
+    print(f"\n📝 First 300 characters:\n{doc.page_content[:300]}...")
+    print(f"\n🔍 Metadata: {doc.metadata}")
+
+else:
+    print(f"❌ Text file not found: {txt_path}")</code></pre>
+  </div>
+
+  <!-- cell-30 -->
+  <div class="md">
+    <h3>Markdown Files</h3>
+    <p>For Markdown files, use <strong>UnstructuredMarkdownLoader</strong> (preserves structure):</p>
+  </div>
+
+  <!-- cell-31 -->
+  <div class="code-cell">
+    <span class="lang">Python</span>
+    <pre><code># Check if README.md exists
+readme_path = "README.md"
+
+if Path(readme_path).exists():
+    try:
+        from langchain_community.document_loaders import UnstructuredMarkdownLoader
+
+        print(f"Loading markdown: {readme_path}\n")
+
+        loader = UnstructuredMarkdownLoader(readme_path)
+        docs = loader.load()
+
+        print(f"✅ Loaded {len(docs)} document(s)")
+        print(f"\nFirst 200 chars:\n{docs[0].page_content[:200]}...")
+
+    except ImportError:
+        print("⚠️ UnstructuredMarkdownLoader requires additional dependencies")
+        print("   Install with: pip install unstructured")
+        print("\n   For now, using TextLoader:")
+
+        loader = TextLoader(readme_path)
+        docs = loader.load()
+        print(f"   ✅ Loaded with TextLoader: {len(docs[0].page_content)} chars")
+else:
+    print(f"ℹ️ No README.md found in current directory")</code></pre>
+  </div>
+
+  <!-- cell-32 -->
+  <div class="md" id="batch-loading">
+    <h2>8. Batch Loading with DirectoryLoader 📂</h2>
+    <h3>🔰 BEGINNER</h3>
+    <p><strong>DirectoryLoader</strong> loads all files from a directory automatically.</p>
+    <p>Perfect for:</p>
+    <ul>
+      <li>Loading entire document libraries</li>
+      <li>Processing multiple files at once</li>
+      <li>Building knowledge bases</li>
+    </ul>
+  </div>
+
+  <!-- cell-33 -->
+  <div class="code-cell">
+    <span class="lang">Python</span>
+    <pre><code>from langchain_community.document_loaders import DirectoryLoader
+
+# Load all files from sample_data directory
+data_dir = "sample_data"
+
+if Path(data_dir).exists():
+    print(f"📂 Loading all text files from: {data_dir}/\n")
+
+    # Create loader for .txt files only
+    loader = DirectoryLoader(
+        data_dir,
+        glob="*.txt",  # Pattern to match files
+        loader_cls=TextLoader,  # Use TextLoader for each file
+        show_progress=True  # Show progress bar
+    )
+
+    # Load all matching files
+    documents = loader.load()
+
+    print(f"\n✅ Loaded {len(documents)} text file(s)\n")
+
+    # Show sources
+    for doc in documents:
+        print(f"  - {doc.metadata['source']} ({len(doc.page_content)} chars)")
+
+else:
+    print(f"❌ Directory not found: {data_dir}")</code></pre>
+  </div>
+
+  <!-- cell-34 -->
+  <div class="md">
+    <h3>🎓 INTERMEDIATE: Loading Multiple File Types</h3>
+  </div>
+
+  <!-- cell-35 -->
+  <div class="code-cell">
+    <span class="lang">Python</span>
+    <pre><code># Advanced: Load all files from a directory (mixed types)
+# This function handles different file types intelligently
+
+def load_all_documents(directory: str) -> list:
+    """
+    Load documents from multiple file formats in a directory.
+
+    Supports: PDF, TXT, CSV, JSON, HTML
+    """
+    all_docs = []
+    directory_path = Path(directory)
+
+    if not directory_path.exists():
+        print(f"❌ Directory not found: {directory}")
+        return []
+
+    print(f"📂 Loading from: {directory}\n")
+
+    # Load PDFs
+    pdf_files = list(directory_path.glob("*.pdf"))
+    for pdf in pdf_files:
+        loader = PyPDFLoader(str(pdf))
+        docs = loader.load()
+        all_docs.extend(docs)
+        print(f"  ✅ PDF: {pdf.name} ({len(docs)} pages)")
+
+    # Load TXT files
+    txt_files = list(directory_path.glob("*.txt"))
+    for txt in txt_files:
+        loader = TextLoader(str(txt))
+        docs = loader.load()
+        all_docs.extend(docs)
+        print(f"  ✅ TXT: {txt.name}")
+
+    # Load CSV files
+    csv_files = list(directory_path.glob("*.csv"))
+    for csv in csv_files:
+        loader = CSVLoader(str(csv))
+        docs = loader.load()
+        all_docs.extend(docs)
+        print(f"  ✅ CSV: {csv.name} ({len(docs)} rows)")
+
+    # Load JSON files
+    json_files = list(directory_path.glob("*.json"))
+    for json_file in json_files:
+        try:
+            loader = JSONLoader(
+                str(json_file),
+                jq_schema=".",
+                text_content=False
+            )
+            docs = loader.load()
+            all_docs.extend(docs)
+            print(f"  ✅ JSON: {json_file.name}")
+        except Exception as e:
+            print(f"  ⚠️ JSON: {json_file.name} (error: {str(e)[:50]}...)")
+
+    print(f"\n📊 Total: {len(all_docs)} documents loaded")
+    return all_docs
+
+# Test the function
+if Path("sample_data").exists():
+    all_documents = load_all_documents("sample_data")
+
+    # Show summary
+    print(f"\n📈 Summary:")
+    sources = [doc.metadata['source'] for doc in all_documents]
+    print(f"   Files loaded: {len(set(sources))}")
+    print(f"   Total documents: {len(all_documents)}")</code></pre>
+  </div>
+
+  <!-- cell-36 -->
+  <div class="md" id="comparison">
+    <h2>9. Loader Comparison Table 📊</h2>
+    <h3>🔰 BEGINNER REFERENCE</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Loader</th><th>File Type</th><th>Use Case</th><th>Documents Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>PyPDFLoader</strong></td><td><code>.pdf</code></td><td>Research papers, books, reports</td><td>1 per page</td></tr>
+        <tr><td><strong>CSVLoader</strong></td><td><code>.csv</code></td><td>Product catalogs, data tables</td><td>1 per row</td></tr>
+        <tr><td><strong>JSONLoader</strong></td><td><code>.json</code></td><td>API responses, config files</td><td>Depends on jq query</td></tr>
+        <tr><td><strong>WebBaseLoader</strong></td><td>Web URLs</td><td>Blog posts, documentation</td><td>1 per URL</td></tr>
+        <tr><td><strong>TextLoader</strong></td><td><code>.txt</code></td><td>Plain text, logs</td><td>1 per file</td></tr>
+        <tr><td><strong>UnstructuredMarkdownLoader</strong></td><td><code>.md</code></td><td>Documentation, notes</td><td>1 per file</td></tr>
+        <tr><td><strong>DirectoryLoader</strong></td><td>Multiple</td><td>Batch processing</td><td>All files matching pattern</td></tr>
+      </tbody>
+    </table>
+    <h3>When to Use Which?</h3>
+    <ul>
+      <li>📕 <strong>Academic papers?</strong> → PyPDFLoader</li>
+      <li>📊 <strong>Structured data?</strong> → CSVLoader</li>
+      <li>🔧 <strong>API data?</strong> → JSONLoader</li>
+      <li>🌐 <strong>Web content?</strong> → WebBaseLoader</li>
+      <li>📝 <strong>Simple text?</strong> → TextLoader</li>
+      <li>📂 <strong>Entire folder?</strong> → DirectoryLoader</li>
+    </ul>
+  </div>
+
+  <!-- cell-37 -->
+  <div class="md" id="best-practices">
+    <h2>10. Best Practices 🌟</h2>
+    <h3>🔰 BEGINNER TIPS</h3>
+    <h4>1. Always Check File Existence</h4>
+    <div class="code-cell">
+      <span class="lang">Python</span>
+      <pre><code># ✅ Good
+if Path(file_path).exists():
+    loader = PyPDFLoader(file_path)
+    docs = loader.load()
+else:
+    print(f"File not found: {file_path}")
+
+# ❌ Bad - Will crash if file doesn't exist
+loader = PyPDFLoader(file_path)
+docs = loader.load()</code></pre>
+    </div>
+    <h4>2. Use Lazy Loading for Large Files</h4>
+    <div class="code-cell">
+      <span class="lang">Python</span>
+      <pre><code># For PDFs > 100 pages or files > 10MB
+for page in loader.lazy_load():
+    process_page(page)</code></pre>
+    </div>
+    <h4>3. Inspect Metadata</h4>
+    <div class="code-cell">
+      <span class="lang">Python</span>
+      <pre><code># Always check what metadata is available
+print(docs[0].metadata)</code></pre>
+    </div>
+    <h3>🎓 INTERMEDIATE TIPS</h3>
+    <h4>1. Error Handling</h4>
+    <div class="code-cell">
+      <span class="lang">Python</span>
+      <pre><code>try:
+    loader = PyPDFLoader(pdf_path)
+    docs = loader.load()
+except FileNotFoundError:
+    print(f"File not found: {pdf_path}")
+except Exception as e:
+    print(f"Error loading {pdf_path}: {e}")</code></pre>
+    </div>
+    <h4>2. Add Custom Metadata</h4>
+    <div class="code-cell">
+      <span class="lang">Python</span>
+      <pre><code># Add custom metadata after loading
+for doc in documents:
+    doc.metadata['loaded_at'] = datetime.now().isoformat()
+    doc.metadata['category'] = 'research_paper'</code></pre>
+    </div>
+    <h4>3. Filter Documents</h4>
+    <div class="code-cell">
+      <span class="lang">Python</span>
+      <pre><code># Filter by metadata
+research_docs = [
+    doc for doc in all_documents
+    if 'research' in doc.metadata['source'].lower()
+]</code></pre>
+    </div>
+  </div>
+
+  <!-- cell-38 -->
+  <div class="md" id="summary">
+    <h2>11. Summary &amp; Exercises 📝</h2>
+    <h3>🎉 What You Learned</h3>
+    <p>✅ <strong>Document Loaders</strong> convert files into standardized Document objects</p>
+    <p>✅ <strong>PyPDFLoader</strong> loads PDF files (1 document per page)</p>
+    <p>✅ <strong>CSVLoader</strong> loads CSV data (1 document per row)</p>
+    <p>✅ <strong>JSONLoader</strong> uses jq syntax to extract data from JSON</p>
+    <p>✅ <strong>WebBaseLoader</strong> scrapes web pages (static HTML only)</p>
+    <p>✅ <strong>TextLoader</strong> handles plain text files</p>
+    <p>✅ <strong>DirectoryLoader</strong> batch processes multiple files</p>
+    <p>✅ All loaders return <strong>Document</strong> objects with <code>page_content</code> and <code>metadata</code></p>
+    <h3>💡 Practice Exercises</h3>
+    <h4>🔰 Beginner Exercises</h4>
+    <ol>
+      <li><strong>Load a PDF and count pages</strong>
+        <ul>
+          <li>Use PyPDFLoader to load <code>attention.pdf</code></li>
+          <li>Print the number of pages</li>
+          <li>Print the first 100 characters of page 1</li>
+        </ul>
+      </li>
+      <li><strong>Load CSV and find products by category</strong>
+        <ul>
+          <li>Load <code>products.csv</code></li>
+          <li>Filter documents to find only "Electronics"</li>
+          <li>Print product names</li>
+        </ul>
+      </li>
+      <li><strong>Combine multiple files</strong>
+        <ul>
+          <li>Load notes.txt, products.csv, and api_response.json</li>
+          <li>Count total documents</li>
+          <li>Print unique sources</li>
+        </ul>
+      </li>
+    </ol>
+    <h4>🎓 Intermediate Exercises</h4>
+    <ol>
+      <li><strong>Build a multi-format loader</strong>
+        <ul>
+          <li>Create a function that accepts a directory path</li>
+          <li>Automatically detect file types (.pdf, .csv, .json, .txt)</li>
+          <li>Load all files and add custom metadata (file_type, loaded_date)</li>
+        </ul>
+      </li>
+      <li><strong>Extract specific data from JSON</strong>
+        <ul>
+          <li>Load <code>api_response.json</code></li>
+          <li>Use jq to extract only article titles</li>
+          <li>Create a summary document with all titles</li>
+        </ul>
+      </li>
+      <li><strong>Lazy load and process</strong>
+        <ul>
+          <li>Use lazy_load() on a PDF</li>
+          <li>Process each page and extract pages containing specific keywords</li>
+          <li>Save filtered pages to a new list</li>
+        </ul>
+      </li>
+    </ol>
+    <h3>📚 Next Steps</h3>
+    <p>In <strong>Notebook 03: Text Splitting Strategies</strong>, you'll learn how to:</p>
+    <ul>
+      <li>Split long documents into chunks</li>
+      <li>Choose optimal chunk sizes</li>
+      <li>Handle overlap for better context</li>
+      <li>Use different splitters for different content types</li>
+    </ul>
+    <hr>
+    <p><strong>Congratulations! You now know how to load data from any source! 🎉</strong></p>
+  </div>
+
+  <!-- Quick Recap (added) -->
+  <div class="callout recap">
+    <h2>⚡ Quick Recap</h2>
+    <ul>
+      <li>A LangChain <strong>Document</strong> is the universal unit passed downstream: a <code>page_content</code> string plus a <code>metadata</code> dict. Every loader, regardless of source format, normalizes its input into these objects.</li>
+      <li>All loaders share one interface — <code>.load()</code> returns the full <code>list[Document]</code> in memory, while <code>.lazy_load()</code> returns a generator that yields one Document at a time to keep memory flat on large inputs.</li>
+      <li>Granularity is loader-specific: <strong>PyPDFLoader</strong> emits one Document per page, <strong>CSVLoader</strong> one per row, <strong>TextLoader</strong> one per file, and <strong>JSONLoader</strong> a count that depends entirely on the jq query.</li>
+      <li><strong>JSONLoader</strong> uses a <code>jq_schema</code> to select which nodes become Documents (<code>.articles[]</code> = each array element); <code>text_content=True</code> requires the selected node to be a scalar string, <code>False</code> serializes the whole node.</li>
+      <li><strong>WebBaseLoader</strong> and <strong>UnstructuredHTMLLoader</strong> only extract static server-rendered HTML — JavaScript-rendered content needs a browser-driven loader such as Playwright or Selenium.</li>
+      <li><strong>DirectoryLoader</strong> batch-loads files matching a <code>glob</code> pattern using a specified <code>loader_cls</code>; mixed-format directories are handled by dispatching per extension in your own code.</li>
+      <li>Defensive loading is standard practice: guard with <code>Path(...).exists()</code> and wrap <code>.load()</code> in try/except, since loaders raise on missing files, missing optional dependencies (jq, unstructured), and malformed content.</li>
+      <li>Metadata (<code>source</code>, <code>page</code>, <code>row</code>) is auto-populated and can be augmented post-load — it is what enables later filtering and citation in a retrieval pipeline.</li>
+    </ul>
+  </div>
+
+  <!-- Interview Prep (added) -->
+  <div class="callout interview">
+    <h2>🎯 Interview Prep</h2>
+
+    <div class="qa">
+      <p class="q">Q1. What is a LangChain Document and why is it central to a RAG pipeline?</p>
+      <p class="a">A Document is a simple container with two fields: <code>page_content</code>, the text itself, and <code>metadata</code>, a dictionary describing where that text came from. Its value is that it decouples the ingestion source from the rest of the pipeline — a PDF, a CSV row, and a scraped web page all arrive downstream as the same object. That means my splitter, embedder, and retriever never need to know the original format. The metadata also travels with the text, so I can filter and cite sources at retrieval time.</p>
+      <p class="gotcha"><strong>Follow-up:</strong> Interviewers may ask why metadata matters — the answer is provenance and filtering: it lets you do metadata-scoped retrieval (e.g. only this year's docs) and return citations, which are essential for trustworthy RAG.</p>
+    </div>
+
+    <div class="qa">
+      <p class="q">Q2. When would you use <code>lazy_load()</code> instead of <code>load()</code>?</p>
+      <p class="a">I use <code>load()</code> for small or moderate inputs where holding everything in memory is fine, because it's simpler and returns a list I can index and slice. I switch to <code>lazy_load()</code> for large files — a several-hundred-page PDF or a huge CSV — because it yields Documents one at a time as a generator, keeping peak memory proportional to a single item rather than the whole corpus. It also lets me start processing (splitting, embedding) before the entire file is read. The tradeoff is I lose random access and a known length up front.</p>
+      <p class="gotcha"><strong>Gotcha:</strong> lazy loading only helps if the downstream stage also streams — if you immediately do <code>list(loader.lazy_load())</code> you've reintroduced the full-memory footprint you were trying to avoid.</p>
+    </div>
+
+    <div class="qa">
+      <p class="q">Q3. Explain how JSONLoader's <code>jq_schema</code> works and the role of <code>text_content</code>.</p>
+      <p class="a">The <code>jq_schema</code> is a jq query that selects which nodes in the JSON become Documents — <code>.articles[]</code> turns each element of the articles array into its own Document, while <code>.articles[].content</code> drills down to just the content string of each. The <code>text_content</code> flag controls how the selected node is interpreted: <code>True</code> expects a scalar string and uses it directly as <code>page_content</code>, whereas <code>False</code> serializes the whole selected object into the content. Choosing wrong is a common error — pointing at an object with <code>text_content=True</code> raises. So I match the flag to whether my query lands on a string or a structure.</p>
+      <p class="gotcha"><strong>Gotcha:</strong> JSONLoader depends on the native <code>jq</code> package, which can be awkward to install on Windows — a frequent reason the loader fails in fresh environments.</p>
+    </div>
+
+    <div class="qa">
+      <p class="q">Q4. Why can't WebBaseLoader scrape every website, and what do you do about it?</p>
+      <p class="a">WebBaseLoader fetches the raw HTML the server returns and parses it — it does not run JavaScript. So for modern single-page apps where the content is rendered client-side, the fetched HTML is largely empty and the loader extracts little or nothing. When I hit that, I move to a browser-based loader like the Playwright or Selenium loaders, which spin up a real browser, execute the JS, and then extract the rendered DOM. The cost is much slower loads and heavier dependencies, so I only reach for them when static extraction genuinely fails.</p>
+      <p class="gotcha"><strong>Follow-up:</strong> Be ready to mention rate-limiting, robots.txt, and setting a proper User-Agent — production scraping needs politeness and error handling, not just the loader call.</p>
+    </div>
+
+    <div class="qa">
+      <p class="q">Q5. How does DirectoryLoader handle a folder containing mixed file types?</p>
+      <p class="a">DirectoryLoader takes a <code>glob</code> pattern and a single <code>loader_cls</code>, so out of the box it applies one loader to all files matching the pattern — for example <code>*.txt</code> with <code>TextLoader</code>. It doesn't auto-select a loader per extension. For genuinely mixed folders I either run it multiple times with different globs and loader classes, or write a small dispatcher that iterates the directory, inspects each extension, and instantiates the right loader — which is exactly what the <code>load_all_documents</code> function in this notebook does.</p>
+      <p class="gotcha"><strong>Gotcha:</strong> a single failing file can abort the whole batch, so wrap per-file loading in try/except and log failures — that's why the notebook's JSON branch catches exceptions individually.</p>
+    </div>
+
+    <div class="qa">
+      <p class="q">Q6. What granularity does each common loader produce, and why does it matter?</p>
+      <p class="a">PyPDFLoader produces one Document per page, CSVLoader one per row, TextLoader one per file, and JSONLoader a variable count driven by the jq query. This matters because granularity sets the natural retrieval unit before any splitting: CSV rows are already nicely self-contained chunks, whereas a PDF page may still be too large and need further splitting, and a whole text file is almost always too big to embed as one vector. Knowing the starting granularity tells me how aggressive my text splitter needs to be next.</p>
+      <p class="gotcha"><strong>Follow-up:</strong> A common probe is "is one-Document-per-page always ideal for PDFs?" — no, semantic content often spans page boundaries, so page-level Documents plus a recursive splitter usually beats relying on pages alone.</p>
+    </div>
+
+    <div class="qa">
+      <p class="q">Q7. What are the key failure modes when loading documents, and how do you guard against them?</p>
+      <p class="a">The main ones are missing files, missing optional dependencies, and malformed or unreadable content. I guard file existence with <code>Path(path).exists()</code> before constructing the loader, and I wrap <code>.load()</code> in try/except catching both <code>FileNotFoundError</code> and a general <code>Exception</code> so one bad file doesn't crash a batch. For dependency issues — like <code>jq</code> for JSONLoader or <code>unstructured</code> for HTML/Markdown — I catch <code>ImportError</code> and fall back to a simpler loader such as TextLoader. Logging what failed and why keeps the ingestion pipeline observable.</p>
+      <p class="gotcha"><strong>Gotcha:</strong> encoding is an easily-missed one — TextLoader can raise on non-UTF-8 files, so passing an explicit <code>encoding</code> or using autodetection avoids silent corruption or hard failures.</p>
+    </div>
+
+  </div>
+
+</div>
+</body>
+</html>
